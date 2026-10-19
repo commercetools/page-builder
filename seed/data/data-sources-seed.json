@@ -1,0 +1,491 @@
+{
+  "groups": [
+    {
+      "key": "category",
+      "name": "Category"
+    },
+    {
+      "key": "product",
+      "name": "Product"
+    }
+  ],
+  "sources": [
+    {
+      "type": "commercetools/category",
+      "name": {
+        "en-US": "Current Category",
+        "en-GB": "Current Category",
+        "de-DE": "Aktuelle Kategorie",
+        "fr-FR": "Catégorie actuelle",
+        "nl-NL": "Huidige categorie",
+        "es-ES": "Categoría actual",
+        "pt-PT": "Categoria atual",
+        "it-IT": "Categoria corrente"
+      },
+      "icon": "Category",
+      "groupKey": "category",
+      "description": {
+        "en-US": "Provides the current category context from the page URL.",
+        "en-GB": "Provides the current category context from the page URL.",
+        "de-DE": "Stellt den aktuellen Kategoriekontext aus der Seiten-URL bereit.",
+        "fr-FR": "Fournit le contexte de catégorie actuel depuis l'URL de la page.",
+        "nl-NL": "Biedt de huidige categoriecontext vanuit de pagina-URL.",
+        "es-ES": "Proporciona el contexto de categoría actual desde la URL de la página.",
+        "pt-PT": "Fornece o contexto de categoria atual a partir do URL da página.",
+        "it-IT": "Fornisce il contesto della categoria corrente dall'URL della pagina."
+      },
+      "schema": []
+    },
+    {
+      "type": "commercetools/products-by-category",
+      "name": {
+        "en-US": "Products by Category",
+        "en-GB": "Products by Category",
+        "de-DE": "Produkte nach Kategorie",
+        "fr-FR": "Produits par catégorie",
+        "nl-NL": "Producten per categorie",
+        "es-ES": "Productos por categoría",
+        "pt-PT": "Produtos por categoria",
+        "it-IT": "Prodotti per categoria"
+      },
+      "icon": "GridView",
+      "groupKey": "category",
+      "description": {
+        "en-US": "Fetches a paginated list of products for the current category.",
+        "en-GB": "Fetches a paginated list of products for the current category.",
+        "de-DE": "Ruft eine seitenweise Liste von Produkten für die aktuelle Kategorie ab.",
+        "fr-FR": "Récupère une liste paginée de produits pour la catégorie actuelle.",
+        "nl-NL": "Haalt een gepagineerde lijst van producten op voor de huidige categorie.",
+        "es-ES": "Obtiene una lista paginada de productos para la categoría actual.",
+        "pt-PT": "Obtém uma lista paginada de produtos para a categoria atual.",
+        "it-IT": "Recupera un elenco paginato di prodotti per la categoria corrente."
+      },
+      "schema": [
+        {
+          "key": "limit",
+          "label": {
+            "en-US": "Limit",
+            "en-GB": "Limit",
+            "de-DE": "Limit",
+            "fr-FR": "Limite",
+            "nl-NL": "Limiet",
+            "es-ES": "Límite",
+            "pt-PT": "Limite",
+            "it-IT": "Limite"
+          },
+          "kind": "number"
+        },
+        {
+          "key": "offset",
+          "label": {
+            "en-US": "Offset",
+            "en-GB": "Offset",
+            "de-DE": "Versatz",
+            "fr-FR": "Décalage",
+            "nl-NL": "Verschuiving",
+            "es-ES": "Desplazamiento",
+            "pt-PT": "Deslocamento",
+            "it-IT": "Offset"
+          },
+          "kind": "number"
+        },
+        {
+          "key": "sort",
+          "label": {
+            "en-US": "Sort",
+            "en-GB": "Sort",
+            "de-DE": "Sortierung",
+            "fr-FR": "Tri",
+            "nl-NL": "Sorteren",
+            "es-ES": "Ordenar",
+            "pt-PT": "Ordenar",
+            "it-IT": "Ordina"
+          },
+          "kind": "select",
+          "localized": true,
+          "options": [
+            {
+              "key": "[{\"field\":\"score\",\"order\":\"asc\"},{\"field\":\"id\",\"order\":\"asc\"}]",
+              "label": {
+                "en-US": "Relevance",
+                "en-GB": "Relevance",
+                "de-DE": "Relevanz",
+                "fr-FR": "Pertinence",
+                "nl-NL": "Relevantie",
+                "es-ES": "Relevancia",
+                "pt-PT": "Relevância",
+                "it-IT": "Rilevanza"
+              }
+            },
+            {
+              "key": "price-asc",
+              "label": {
+                "en-US": "Price Ascending",
+                "en-GB": "Price Ascending",
+                "de-DE": "Preis aufsteigend",
+                "fr-FR": "Prix croissant",
+                "nl-NL": "Prijs oplopend",
+                "es-ES": "Precio ascendente",
+                "pt-PT": "Preço ascendente",
+                "it-IT": "Prezzo crescente"
+              }
+            },
+            {
+              "key": "price-desc",
+              "label": {
+                "en-US": "Price Descending",
+                "en-GB": "Price Descending",
+                "de-DE": "Preis absteigend",
+                "fr-FR": "Prix décroissant",
+                "nl-NL": "Prijs aflopend",
+                "es-ES": "Precio descendente",
+                "pt-PT": "Preço descendente",
+                "it-IT": "Prezzo decrescente"
+              }
+            },
+            {
+              "key": "name",
+              "label": {
+                "en-US": "Name",
+                "en-GB": "Name",
+                "de-DE": "Name",
+                "fr-FR": "Nom",
+                "nl-NL": "Naam",
+                "es-ES": "Nombre",
+                "pt-PT": "Nome",
+                "it-IT": "Nome"
+              }
+            },
+            {
+              "key": "newest",
+              "label": {
+                "en-US": "Newest",
+                "en-GB": "Newest",
+                "de-DE": "Neueste",
+                "fr-FR": "Plus récent",
+                "nl-NL": "Nieuwste",
+                "es-ES": "Más reciente",
+                "pt-PT": "Mais recente",
+                "it-IT": "Più recente"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "commercetools/category-list",
+      "name": {
+        "en-US": "Category list",
+        "en-GB": "Category list",
+        "de-DE": "Kategorieliste",
+        "fr-FR": "Liste de catégories",
+        "nl-NL": "Categorielijst",
+        "es-ES": "Lista de categorías",
+        "pt-PT": "Lista de categorias",
+        "it-IT": "Elenco categorie"
+      },
+      "icon": "List",
+      "groupKey": "category",
+      "description": {
+        "en-US": "Fetches a flat or filtered list of categories.",
+        "en-GB": "Fetches a flat or filtered list of categories.",
+        "de-DE": "Ruft eine flache oder gefilterte Kategorieliste ab.",
+        "fr-FR": "Récupère une liste de catégories plate ou filtrée.",
+        "nl-NL": "Haalt een platte of gefilterde lijst met categorieën op.",
+        "es-ES": "Obtiene una lista plana o filtrada de categorías.",
+        "pt-PT": "Obtém uma lista plana ou filtrada de categorias.",
+        "it-IT": "Recupera un elenco di categorie semplice o filtrato."
+      },
+      "schema": [
+        {
+          "key": "where",
+          "label": {
+            "en-US": "Where",
+            "en-GB": "Where",
+            "de-DE": "Wo",
+            "fr-FR": "Où",
+            "nl-NL": "Waar",
+            "es-ES": "Donde",
+            "pt-PT": "Onde",
+            "it-IT": "Dove"
+          },
+          "kind": "text"
+        },
+        {
+          "key": "categoryPins",
+          "label": {
+            "en-US": "Category pins",
+            "en-GB": "Category pins",
+            "de-DE": "Kategorie-Pins",
+            "fr-FR": "Épingles de catégorie",
+            "nl-NL": "Categorie-pins",
+            "es-ES": "Pines de categoría",
+            "pt-PT": "Pins de categoria",
+            "it-IT": "Pin categoria"
+          },
+          "kind": "categoryPins"
+        },
+        {
+          "key": "limit",
+          "label": {
+            "en-US": "Limit",
+            "en-GB": "Limit",
+            "de-DE": "Limit",
+            "fr-FR": "Limite",
+            "nl-NL": "Limiet",
+            "es-ES": "Límite",
+            "pt-PT": "Limite",
+            "it-IT": "Limite"
+          },
+          "kind": "number"
+        }
+      ]
+    },
+    {
+      "type": "commercetools/product",
+      "name": {
+        "en-US": "Current Product",
+        "en-GB": "Current Product",
+        "de-DE": "Aktuelles Produkt",
+        "fr-FR": "Produit actuel",
+        "nl-NL": "Huidig product",
+        "es-ES": "Producto actual",
+        "pt-PT": "Produto atual",
+        "it-IT": "Prodotto corrente"
+      },
+      "icon": "Inventory2",
+      "groupKey": "product",
+      "description": {
+        "en-US": "Provides the current product context from the page URL.",
+        "en-GB": "Provides the current product context from the page URL.",
+        "de-DE": "Stellt den aktuellen Produktkontext aus der Seiten-URL bereit.",
+        "fr-FR": "Fournit le contexte de produit actuel depuis l'URL de la page.",
+        "nl-NL": "Biedt de huidige productcontext vanuit de pagina-URL.",
+        "es-ES": "Proporciona el contexto de producto actual desde la URL de la página.",
+        "pt-PT": "Fornece o contexto de produto atual a partir do URL da página.",
+        "it-IT": "Fornisce il contesto del prodotto corrente dall'URL della pagina."
+      },
+      "schema": []
+    },
+    {
+      "type": "product/related",
+      "name": {
+        "en-US": "Related Products",
+        "en-GB": "Related Products",
+        "de-DE": "Ähnliche Produkte",
+        "fr-FR": "Produits associés",
+        "nl-NL": "Gerelateerde producten",
+        "es-ES": "Productos relacionados",
+        "pt-PT": "Produtos relacionados",
+        "it-IT": "Prodotti correlati"
+      },
+      "icon": "ViewCarousel",
+      "groupKey": "product",
+      "description": {
+        "en-US": "Fetches products related to the current product.",
+        "en-GB": "Fetches products related to the current product.",
+        "de-DE": "Ruft Produkte ab, die mit dem aktuellen Produkt verwandt sind.",
+        "fr-FR": "Récupère les produits associés au produit actuel.",
+        "nl-NL": "Haalt producten op die gerelateerd zijn aan het huidige product.",
+        "es-ES": "Obtiene productos relacionados con el producto actual.",
+        "pt-PT": "Obtém produtos relacionados com o produto atual.",
+        "it-IT": "Recupera i prodotti correlati al prodotto corrente."
+      },
+      "schema": []
+    },
+    {
+      "type": "commercetools/product-list",
+      "name": {
+        "en-US": "Product list",
+        "en-GB": "Product list",
+        "de-DE": "Produktliste",
+        "fr-FR": "Liste de produits",
+        "nl-NL": "Productenlijst",
+        "es-ES": "Lista de productos",
+        "pt-PT": "Lista de produtos",
+        "it-IT": "Elenco prodotti"
+      },
+      "icon": "Inventory2",
+      "groupKey": "product",
+      "description": {
+        "en-US": "Fetches a configurable list of products by query, category, or filter.",
+        "en-GB": "Fetches a configurable list of products by query, category, or filter.",
+        "de-DE": "Ruft eine konfigurierbare Produktliste ab.",
+        "fr-FR": "Récupère une liste de produits configurable.",
+        "nl-NL": "Haalt een configureerbare productlijst op.",
+        "es-ES": "Obtiene una lista de productos configurable.",
+        "pt-PT": "Obtém uma lista de produtos configurável.",
+        "it-IT": "Recupera un elenco di prodotti configurabile."
+      },
+      "schema": [
+        {
+          "key": "query",
+          "label": {
+            "en-US": "Query",
+            "en-GB": "Query",
+            "de-DE": "Abfrage",
+            "fr-FR": "Requête",
+            "nl-NL": "Zoekopdracht",
+            "es-ES": "Consulta",
+            "pt-PT": "Consulta",
+            "it-IT": "Query"
+          },
+          "kind": "text"
+        },
+        {
+          "key": "limit",
+          "label": {
+            "en-US": "Limit",
+            "en-GB": "Limit",
+            "de-DE": "Limit",
+            "fr-FR": "Limite",
+            "nl-NL": "Limiet",
+            "es-ES": "Límite",
+            "pt-PT": "Limite",
+            "it-IT": "Limite"
+          },
+          "kind": "number"
+        },
+        {
+          "key": "offset",
+          "label": {
+            "en-US": "Offset",
+            "en-GB": "Offset",
+            "de-DE": "Versatz",
+            "fr-FR": "Décalage",
+            "nl-NL": "Verschuiving",
+            "es-ES": "Desplazamiento",
+            "pt-PT": "Deslocamento",
+            "it-IT": "Offset"
+          },
+          "kind": "number"
+        },
+        {
+          "key": "categoryId",
+          "label": {
+            "en-US": "Category",
+            "en-GB": "Category",
+            "de-DE": "Kategorie",
+            "fr-FR": "Catégorie",
+            "nl-NL": "Categorie",
+            "es-ES": "Categoría",
+            "pt-PT": "Categoria",
+            "it-IT": "Categoria"
+          },
+          "kind": "category"
+        },
+        {
+          "key": "categorySubTree",
+          "label": {
+            "en-US": "Category Sub Tree",
+            "en-GB": "Category Sub Tree",
+            "de-DE": "Kategorie-Teilbaum",
+            "fr-FR": "Sous-arbre de catégorie",
+            "nl-NL": "Categorie-substructuur",
+            "es-ES": "Subárbol de categoría",
+            "pt-PT": "Subárvore de categoria",
+            "it-IT": "Sottoalbero categoria"
+          },
+          "kind": "boolean"
+        },
+        {
+          "key": "productPins",
+          "label": {
+            "en-US": "Product pins",
+            "en-GB": "Product pins",
+            "de-DE": "Produkt-Pins",
+            "fr-FR": "Épingles produits",
+            "nl-NL": "Product-pins",
+            "es-ES": "Pines de producto",
+            "pt-PT": "Pins de produto",
+            "it-IT": "Pin prodotto"
+          },
+          "kind": "productPins"
+        },
+        {
+          "key": "sort",
+          "label": {
+            "en-US": "Sort",
+            "en-GB": "Sort",
+            "de-DE": "Sortierung",
+            "fr-FR": "Tri",
+            "nl-NL": "Sorteren",
+            "es-ES": "Ordenar",
+            "pt-PT": "Ordenar",
+            "it-IT": "Ordina"
+          },
+          "kind": "select",
+          "localized": true,
+          "options": [
+            {
+              "key": "[{\"field\":\"score\",\"order\":\"asc\"},{\"field\":\"id\",\"order\":\"asc\"}]",
+              "label": {
+                "en-US": "Relevance",
+                "en-GB": "Relevance",
+                "de-DE": "Relevanz",
+                "fr-FR": "Pertinence",
+                "nl-NL": "Relevantie",
+                "es-ES": "Relevancia",
+                "pt-PT": "Relevância",
+                "it-IT": "Rilevanza"
+              }
+            },
+            {
+              "key": "price-asc",
+              "label": {
+                "en-US": "Price Ascending",
+                "en-GB": "Price Ascending",
+                "de-DE": "Preis aufsteigend",
+                "fr-FR": "Prix croissant",
+                "nl-NL": "Prijs oplopend",
+                "es-ES": "Precio ascendente",
+                "pt-PT": "Preço ascendente",
+                "it-IT": "Prezzo crescente"
+              }
+            },
+            {
+              "key": "price-desc",
+              "label": {
+                "en-US": "Price Descending",
+                "en-GB": "Price Descending",
+                "de-DE": "Preis absteigend",
+                "fr-FR": "Prix décroissant",
+                "nl-NL": "Prijs aflopend",
+                "es-ES": "Precio descendente",
+                "pt-PT": "Preço descendente",
+                "it-IT": "Prezzo decrescente"
+              }
+            },
+            {
+              "key": "name",
+              "label": {
+                "en-US": "Name",
+                "en-GB": "Name",
+                "de-DE": "Name",
+                "fr-FR": "Nom",
+                "nl-NL": "Naam",
+                "es-ES": "Nombre",
+                "pt-PT": "Nome",
+                "it-IT": "Nome"
+              }
+            },
+            {
+              "key": "newest",
+              "label": {
+                "en-US": "Newest",
+                "en-GB": "Newest",
+                "de-DE": "Neueste",
+                "fr-FR": "Plus récent",
+                "nl-NL": "Nieuwste",
+                "es-ES": "Más reciente",
+                "pt-PT": "Mais recente",
+                "it-IT": "Più recente"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1118 @@
+{
+  "groups": [
+    {
+      "key": "content",
+      "name": {
+        "en-US": "Content",
+        "en-GB": "Content",
+        "de-DE": "Inhalt",
+        "fr-FR": "Contenu",
+        "nl-NL": "Inhoud",
+        "es-ES": "Contenido",
+        "pt-PT": "Conteúdo",
+        "it-IT": "Contenuto"
+      }
+    },
+    {
+      "key": "category",
+      "name": {
+        "en-US": "Category",
+        "en-GB": "Category",
+        "de-DE": "Kategorie",
+        "fr-FR": "Catégorie",
+        "nl-NL": "Categorie",
+        "es-ES": "Categoría",
+        "pt-PT": "Categoria",
+        "it-IT": "Categoria"
+      }
+    },
+    {
+      "key": "product",
+      "name": {
+        "en-US": "Product",
+        "en-GB": "Product",
+        "de-DE": "Produkt",
+        "fr-FR": "Produit",
+        "nl-NL": "Product",
+        "es-ES": "Producto",
+        "pt-PT": "Produto",
+        "it-IT": "Prodotto"
+      }
+    }
+  ],
+  "components": [
+    {
+      "type": "content/hero",
+      "name": {
+        "en-US": "Hero banner",
+        "en-GB": "Hero banner",
+        "de-DE": "Hero-Banner",
+        "fr-FR": "Bannière héro",
+        "nl-NL": "Héro-banner",
+        "es-ES": "Banner hero",
+        "pt-PT": "Banner hero",
+        "it-IT": "Banner hero"
+      },
+      "icon": "ViewCarousel",
+      "groupKey": "content",
+      "schema": [
+        {
+          "key": "title",
+          "label": {
+            "en-US": "Title",
+            "en-GB": "Title",
+            "de-DE": "Titel",
+            "fr-FR": "Titre",
+            "nl-NL": "Titel",
+            "es-ES": "Título",
+            "pt-PT": "Título",
+            "it-IT": "Titolo"
+          },
+          "kind": "richtext",
+          "required": true,
+          "localized": true
+        },
+        {
+          "key": "subTitle",
+          "label": {
+            "en-US": "Sub Title",
+            "en-GB": "Sub Title",
+            "de-DE": "Untertitel",
+            "fr-FR": "Sous-titre",
+            "nl-NL": "Ondertitel",
+            "es-ES": "Subtítulo",
+            "pt-PT": "Subtítulo",
+            "it-IT": "Sottotitolo"
+          },
+          "kind": "richtext",
+          "required": true,
+          "localized": true
+        },
+        {
+          "key": "text",
+          "label": {
+            "en-US": "Text",
+            "en-GB": "Text",
+            "de-DE": "Text",
+            "fr-FR": "Texte",
+            "nl-NL": "Tekst",
+            "es-ES": "Texto",
+            "pt-PT": "Texto",
+            "it-IT": "Testo"
+          },
+          "kind": "richtext",
+          "required": true,
+          "localized": true
+        },
+        {
+          "key": "image",
+          "label": {
+            "en-US": "Background Image",
+            "en-GB": "Background Image",
+            "de-DE": "Hintergrundbild",
+            "fr-FR": "Image d'arrière-plan",
+            "nl-NL": "Achtergrondafbeelding",
+            "es-ES": "Imagen de fondo",
+            "pt-PT": "Imagem de fundo",
+            "it-IT": "Immagine di sfondo"
+          },
+          "kind": "image"
+        },
+        {
+          "key": "buttons",
+          "label": {
+            "en-US": "Buttons",
+            "en-GB": "Buttons",
+            "de-DE": "Schaltflächen",
+            "fr-FR": "Boutons",
+            "nl-NL": "Knoppen",
+            "es-ES": "Botones",
+            "pt-PT": "Botões",
+            "it-IT": "Pulsanti"
+          },
+          "kind": "group",
+          "children": [
+            {
+              "key": "label",
+              "label": {
+                "en-US": "Label",
+                "en-GB": "Label",
+                "de-DE": "Beschriftung",
+                "fr-FR": "Libellé",
+                "nl-NL": "Label",
+                "es-ES": "Etiqueta",
+                "pt-PT": "Etiqueta",
+                "it-IT": "Etichetta"
+              },
+              "kind": "text",
+              "localized": true
+            },
+            {
+              "key": "target",
+              "label": {
+                "en-US": "Target",
+                "en-GB": "Target",
+                "de-DE": "Ziel",
+                "fr-FR": "Cible",
+                "nl-NL": "Doel",
+                "es-ES": "Destino",
+                "pt-PT": "Destino",
+                "it-IT": "Destinazione"
+              },
+              "kind": "link"
+            },
+            {
+              "key": "style",
+              "label": {
+                "en-US": "Style",
+                "en-GB": "Style",
+                "de-DE": "Stil",
+                "fr-FR": "Style",
+                "nl-NL": "Stijl",
+                "es-ES": "Estilo",
+                "pt-PT": "Estilo",
+                "it-IT": "Stile"
+              },
+              "kind": "select",
+              "localized": true,
+              "options": [
+                {
+                  "key": "primary",
+                  "label": {
+                    "en-US": "Primary",
+                    "en-GB": "Primary",
+                    "de-DE": "Primär",
+                    "fr-FR": "Primaire",
+                    "nl-NL": "Primair",
+                    "es-ES": "Primario",
+                    "pt-PT": "Primário",
+                    "it-IT": "Primario"
+                  }
+                },
+                {
+                  "key": "outline",
+                  "label": {
+                    "en-US": "Outline",
+                    "en-GB": "Outline",
+                    "de-DE": "Umriss",
+                    "fr-FR": "Contour",
+                    "nl-NL": "Omtrek",
+                    "es-ES": "Contorno",
+                    "pt-PT": "Contorno",
+                    "it-IT": "Contorno"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "pageTypes": [
+        "all"
+      ]
+    },
+    {
+      "type": "content/message",
+      "name": {
+        "en-US": "Message",
+        "en-GB": "Message",
+        "de-DE": "Nachricht",
+        "fr-FR": "Message",
+        "nl-NL": "Bericht",
+        "es-ES": "Mensaje",
+        "pt-PT": "Mensagem",
+        "it-IT": "Messaggio"
+      },
+      "icon": "ChatBubbleOutline",
+      "groupKey": "content",
+      "schema": [
+        {
+          "key": "title",
+          "label": {
+            "en-US": "Title",
+            "en-GB": "Title",
+            "de-DE": "Titel",
+            "fr-FR": "Titre",
+            "nl-NL": "Titel",
+            "es-ES": "Título",
+            "pt-PT": "Título",
+            "it-IT": "Titolo"
+          },
+          "kind": "text",
+          "localized": true
+        },
+        {
+          "key": "description",
+          "label": {
+            "en-US": "Description",
+            "en-GB": "Description",
+            "de-DE": "Beschreibung",
+            "fr-FR": "Description",
+            "nl-NL": "Beschrijving",
+            "es-ES": "Descripción",
+            "pt-PT": "Descrição",
+            "it-IT": "Descrizione"
+          },
+          "kind": "text",
+          "localized": true
+        },
+        {
+          "key": "buttons",
+          "label": {
+            "en-US": "Buttons",
+            "en-GB": "Buttons",
+            "de-DE": "Schaltflächen",
+            "fr-FR": "Boutons",
+            "nl-NL": "Knoppen",
+            "es-ES": "Botones",
+            "pt-PT": "Botões",
+            "it-IT": "Pulsanti"
+          },
+          "kind": "group",
+          "children": [
+            {
+              "key": "label",
+              "label": {
+                "en-US": "Label",
+                "en-GB": "Label",
+                "de-DE": "Beschriftung",
+                "fr-FR": "Libellé",
+                "nl-NL": "Label",
+                "es-ES": "Etiqueta",
+                "pt-PT": "Etiqueta",
+                "it-IT": "Etichetta"
+              },
+              "kind": "text",
+              "localized": true
+            },
+            {
+              "key": "target",
+              "label": {
+                "en-US": "Target",
+                "en-GB": "Target",
+                "de-DE": "Ziel",
+                "fr-FR": "Cible",
+                "nl-NL": "Doel",
+                "es-ES": "Destino",
+                "pt-PT": "Destino",
+                "it-IT": "Destinazione"
+              },
+              "kind": "text"
+            }
+          ]
+        }
+      ],
+      "pageTypes": [
+        "all"
+      ]
+    },
+    {
+      "type": "category/category-carousel",
+      "name": {
+        "en-US": "Category carousel",
+        "en-GB": "Category carousel",
+        "de-DE": "Kategorie-Karussell",
+        "fr-FR": "Carrousel de catégories",
+        "nl-NL": "Categoriecarrousel",
+        "es-ES": "Carrusel de categorías",
+        "pt-PT": "Carrossel de categorias",
+        "it-IT": "Carosello categorie"
+      },
+      "icon": "ViewCarousel",
+      "groupKey": "category",
+      "schema": [
+        {
+          "key": "title",
+          "label": {
+            "en-US": "Title",
+            "en-GB": "Title",
+            "de-DE": "Titel",
+            "fr-FR": "Titre",
+            "nl-NL": "Titel",
+            "es-ES": "Título",
+            "pt-PT": "Título",
+            "it-IT": "Titolo"
+          },
+          "kind": "richtext",
+          "localized": true
+        },
+        {
+          "key": "label",
+          "label": {
+            "en-US": "Label",
+            "en-GB": "Label",
+            "de-DE": "Beschriftung",
+            "fr-FR": "Libellé",
+            "nl-NL": "Label",
+            "es-ES": "Etiqueta",
+            "pt-PT": "Etiqueta",
+            "it-IT": "Etichetta"
+          },
+          "kind": "text",
+          "localized": true
+        },
+        {
+          "key": "target",
+          "label": {
+            "en-US": "Target",
+            "en-GB": "Target",
+            "de-DE": "Ziel",
+            "fr-FR": "Cible",
+            "nl-NL": "Doel",
+            "es-ES": "Destino",
+            "pt-PT": "Destino",
+            "it-IT": "Destinazione"
+          },
+          "kind": "link"
+        },
+        {
+          "key": "categories",
+          "label": {
+            "en-US": "Categories",
+            "en-GB": "Categories",
+            "de-DE": "Kategorien",
+            "fr-FR": "Catégories",
+            "nl-NL": "Categorieën",
+            "es-ES": "Categorías",
+            "pt-PT": "Categorias",
+            "it-IT": "Categorie"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/category-list"
+        }
+      ],
+      "pageTypes": [
+        "all"
+      ]
+    },
+    {
+      "type": "category/breadcrumb",
+      "name": {
+        "en-US": "Breadcrumb",
+        "en-GB": "Breadcrumb",
+        "de-DE": "Breadcrumb",
+        "fr-FR": "Fil d'Ariane",
+        "nl-NL": "Broodkruimel",
+        "es-ES": "Ruta de navegación",
+        "pt-PT": "Breadcrumb",
+        "it-IT": "Breadcrumb"
+      },
+      "icon": "LinearScale",
+      "groupKey": "category",
+      "schema": [
+        {
+          "key": "category",
+          "label": {
+            "en-US": "Category",
+            "en-GB": "Category",
+            "de-DE": "Kategorie",
+            "fr-FR": "Catégorie",
+            "nl-NL": "Categorie",
+            "es-ES": "Categoría",
+            "pt-PT": "Categoria",
+            "it-IT": "Categoria"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/category"
+        }
+      ],
+      "pageTypes": [
+        "category"
+      ]
+    },
+    {
+      "type": "category/category-title",
+      "name": {
+        "en-US": "Category title",
+        "en-GB": "Category title",
+        "de-DE": "Kategorietitel",
+        "fr-FR": "Titre de catégorie",
+        "nl-NL": "Categorietitel",
+        "es-ES": "Título de categoría",
+        "pt-PT": "Título de categoria",
+        "it-IT": "Titolo categoria"
+      },
+      "icon": "Title",
+      "groupKey": "category",
+      "schema": [
+        {
+          "key": "category",
+          "label": {
+            "en-US": "Category",
+            "en-GB": "Category",
+            "de-DE": "Kategorie",
+            "fr-FR": "Catégorie",
+            "nl-NL": "Categorie",
+            "es-ES": "Categoría",
+            "pt-PT": "Categoria",
+            "it-IT": "Categoria"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/category"
+        }
+      ],
+      "pageTypes": [
+        "category"
+      ]
+    },
+    {
+      "type": "category/facets",
+      "name": {
+        "en-US": "Facets",
+        "en-GB": "Facets",
+        "de-DE": "Facetten",
+        "fr-FR": "Facettes",
+        "nl-NL": "Facetten",
+        "es-ES": "Facetas",
+        "pt-PT": "Facetas",
+        "it-IT": "Facette"
+      },
+      "icon": "Tune",
+      "groupKey": "category",
+      "schema": [
+        {
+          "key": "products",
+          "label": {
+            "en-US": "Products",
+            "en-GB": "Products",
+            "de-DE": "Produkte",
+            "fr-FR": "Produits",
+            "nl-NL": "Producten",
+            "es-ES": "Productos",
+            "pt-PT": "Produtos",
+            "it-IT": "Prodotti"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/products-by-category"
+        }
+      ],
+      "pageTypes": [
+        "category"
+      ]
+    },
+    {
+      "type": "category/subcategories",
+      "name": {
+        "en-US": "Subcategories",
+        "en-GB": "Subcategories",
+        "de-DE": "Unterkategorien",
+        "fr-FR": "Sous-catégories",
+        "nl-NL": "Subcategorieën",
+        "es-ES": "Subcategorías",
+        "pt-PT": "Subcategorias",
+        "it-IT": "Sottocategorie"
+      },
+      "icon": "AccountTree",
+      "groupKey": "category",
+      "schema": [
+        {
+          "key": "category",
+          "label": {
+            "en-US": "Category",
+            "en-GB": "Category",
+            "de-DE": "Kategorie",
+            "fr-FR": "Catégorie",
+            "nl-NL": "Categorie",
+            "es-ES": "Categoría",
+            "pt-PT": "Categoria",
+            "it-IT": "Categoria"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/category"
+        }
+      ],
+      "pageTypes": [
+        "category"
+      ]
+    },
+    {
+      "type": "category/toolbar",
+      "name": {
+        "en-US": "Toolbar",
+        "en-GB": "Toolbar",
+        "de-DE": "Werkzeugleiste",
+        "fr-FR": "Barre d'outils",
+        "nl-NL": "Werkbalk",
+        "es-ES": "Barra de herramientas",
+        "pt-PT": "Barra de ferramentas",
+        "it-IT": "Barra degli strumenti"
+      },
+      "icon": "Sort",
+      "groupKey": "category",
+      "schema": [
+        {
+          "key": "products",
+          "label": {
+            "en-US": "Products",
+            "en-GB": "Products",
+            "de-DE": "Produkte",
+            "fr-FR": "Produits",
+            "nl-NL": "Producten",
+            "es-ES": "Productos",
+            "pt-PT": "Produtos",
+            "it-IT": "Prodotti"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/products-by-category"
+        }
+      ],
+      "pageTypes": [
+        "category"
+      ]
+    },
+    {
+      "type": "category/products",
+      "name": {
+        "en-US": "Products",
+        "en-GB": "Products",
+        "de-DE": "Produkte",
+        "fr-FR": "Produits",
+        "nl-NL": "Producten",
+        "es-ES": "Productos",
+        "pt-PT": "Produtos",
+        "it-IT": "Prodotti"
+      },
+      "icon": "GridView",
+      "groupKey": "category",
+      "schema": [
+        {
+          "key": "category",
+          "label": {
+            "en-US": "Category",
+            "en-GB": "Category",
+            "de-DE": "Kategorie",
+            "fr-FR": "Catégorie",
+            "nl-NL": "Categorie",
+            "es-ES": "Categoría",
+            "pt-PT": "Categoria",
+            "it-IT": "Categoria"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/category"
+        },
+        {
+          "key": "products",
+          "label": {
+            "en-US": "Products",
+            "en-GB": "Products",
+            "de-DE": "Produkte",
+            "fr-FR": "Produits",
+            "nl-NL": "Producten",
+            "es-ES": "Productos",
+            "pt-PT": "Produtos",
+            "it-IT": "Prodotti"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/products-by-category"
+        }
+      ],
+      "pageTypes": [
+        "category"
+      ]
+    },
+    {
+      "type": "category/pagination",
+      "name": {
+        "en-US": "Pagination",
+        "en-GB": "Pagination",
+        "de-DE": "Seitennavigation",
+        "fr-FR": "Pagination",
+        "nl-NL": "Paginering",
+        "es-ES": "Paginación",
+        "pt-PT": "Paginação",
+        "it-IT": "Paginazione"
+      },
+      "icon": "LastPage",
+      "groupKey": "category",
+      "schema": [
+        {
+          "key": "products",
+          "label": {
+            "en-US": "Products",
+            "en-GB": "Products",
+            "de-DE": "Produkte",
+            "fr-FR": "Produits",
+            "nl-NL": "Producten",
+            "es-ES": "Productos",
+            "pt-PT": "Produtos",
+            "it-IT": "Prodotti"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/products-by-category"
+        }
+      ],
+      "pageTypes": [
+        "category"
+      ]
+    },
+    {
+      "type": "product/breadcrumb",
+      "name": {
+        "en-US": "Breadcrumb",
+        "en-GB": "Breadcrumb",
+        "de-DE": "Breadcrumb",
+        "fr-FR": "Fil d'Ariane",
+        "nl-NL": "Broodkruimel",
+        "es-ES": "Ruta de navegación",
+        "pt-PT": "Breadcrumb",
+        "it-IT": "Breadcrumb"
+      },
+      "icon": "LinearScale",
+      "groupKey": "product",
+      "schema": [
+        {
+          "key": "product",
+          "label": {
+            "en-US": "Product",
+            "en-GB": "Product",
+            "de-DE": "Produkt",
+            "fr-FR": "Produit",
+            "nl-NL": "Product",
+            "es-ES": "Producto",
+            "pt-PT": "Produto",
+            "it-IT": "Prodotto"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/product"
+        }
+      ],
+      "pageTypes": [
+        "pdp"
+      ]
+    },
+    {
+      "type": "product/gallery",
+      "name": {
+        "en-US": "Gallery",
+        "en-GB": "Gallery",
+        "de-DE": "Galerie",
+        "fr-FR": "Galerie",
+        "nl-NL": "Galerij",
+        "es-ES": "Galería",
+        "pt-PT": "Galeria",
+        "it-IT": "Galleria"
+      },
+      "icon": "PhotoLibrary",
+      "groupKey": "product",
+      "schema": [
+        {
+          "key": "product",
+          "label": {
+            "en-US": "Product",
+            "en-GB": "Product",
+            "de-DE": "Produkt",
+            "fr-FR": "Produit",
+            "nl-NL": "Product",
+            "es-ES": "Producto",
+            "pt-PT": "Produto",
+            "it-IT": "Prodotto"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/product"
+        }
+      ],
+      "pageTypes": [
+        "pdp"
+      ]
+    },
+    {
+      "type": "product/title",
+      "name": {
+        "en-US": "Product title",
+        "en-GB": "Product title",
+        "de-DE": "Produkttitel",
+        "fr-FR": "Titre du produit",
+        "nl-NL": "Producttitel",
+        "es-ES": "Título del producto",
+        "pt-PT": "Título do produto",
+        "it-IT": "Titolo prodotto"
+      },
+      "icon": "Title",
+      "groupKey": "product",
+      "schema": [
+        {
+          "key": "product",
+          "label": {
+            "en-US": "Product",
+            "en-GB": "Product",
+            "de-DE": "Produkt",
+            "fr-FR": "Produit",
+            "nl-NL": "Product",
+            "es-ES": "Producto",
+            "pt-PT": "Produto",
+            "it-IT": "Prodotto"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/product"
+        }
+      ],
+      "pageTypes": [
+        "pdp"
+      ]
+    },
+    {
+      "type": "product/price",
+      "name": {
+        "en-US": "Price",
+        "en-GB": "Price",
+        "de-DE": "Preis",
+        "fr-FR": "Prix",
+        "nl-NL": "Prijs",
+        "es-ES": "Precio",
+        "pt-PT": "Preço",
+        "it-IT": "Prezzo"
+      },
+      "icon": "Sell",
+      "groupKey": "product",
+      "schema": [
+        {
+          "key": "product",
+          "label": {
+            "en-US": "Product",
+            "en-GB": "Product",
+            "de-DE": "Produkt",
+            "fr-FR": "Produit",
+            "nl-NL": "Product",
+            "es-ES": "Producto",
+            "pt-PT": "Produto",
+            "it-IT": "Prodotto"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/product"
+        }
+      ],
+      "pageTypes": [
+        "pdp"
+      ]
+    },
+    {
+      "type": "product/description",
+      "name": {
+        "en-US": "Description",
+        "en-GB": "Description",
+        "de-DE": "Beschreibung",
+        "fr-FR": "Description",
+        "nl-NL": "Beschrijving",
+        "es-ES": "Descripción",
+        "pt-PT": "Descrição",
+        "it-IT": "Descrizione"
+      },
+      "icon": "Description",
+      "groupKey": "product",
+      "schema": [
+        {
+          "key": "product",
+          "label": {
+            "en-US": "Product",
+            "en-GB": "Product",
+            "de-DE": "Produkt",
+            "fr-FR": "Produit",
+            "nl-NL": "Product",
+            "es-ES": "Producto",
+            "pt-PT": "Produto",
+            "it-IT": "Prodotto"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/product"
+        }
+      ],
+      "pageTypes": [
+        "pdp"
+      ]
+    },
+    {
+      "type": "product/info-attributes",
+      "name": {
+        "en-US": "Info & attributes",
+        "en-GB": "Info & attributes",
+        "de-DE": "Info & Attribute",
+        "fr-FR": "Infos & attributs",
+        "nl-NL": "Info & kenmerken",
+        "es-ES": "Info y atributos",
+        "pt-PT": "Info e atributos",
+        "it-IT": "Info e attributi"
+      },
+      "icon": "ListAlt",
+      "groupKey": "product",
+      "schema": [
+        {
+          "key": "product",
+          "label": {
+            "en-US": "Product",
+            "en-GB": "Product",
+            "de-DE": "Produkt",
+            "fr-FR": "Produit",
+            "nl-NL": "Product",
+            "es-ES": "Producto",
+            "pt-PT": "Produto",
+            "it-IT": "Prodotto"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/product"
+        }
+      ],
+      "pageTypes": [
+        "pdp"
+      ]
+    },
+    {
+      "type": "product/variant-selector",
+      "name": {
+        "en-US": "Variant selector",
+        "en-GB": "Variant selector",
+        "de-DE": "Variantenauswahl",
+        "fr-FR": "Sélecteur de variante",
+        "nl-NL": "Variantkiezer",
+        "es-ES": "Selector de variante",
+        "pt-PT": "Seletor de variante",
+        "it-IT": "Selettore variante"
+      },
+      "icon": "Tune",
+      "groupKey": "product",
+      "schema": [
+        {
+          "key": "product",
+          "label": {
+            "en-US": "Product",
+            "en-GB": "Product",
+            "de-DE": "Produkt",
+            "fr-FR": "Produit",
+            "nl-NL": "Product",
+            "es-ES": "Producto",
+            "pt-PT": "Produto",
+            "it-IT": "Prodotto"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/product"
+        },
+        {
+          "key": "variantSortOrder",
+          "label": {
+            "en-US": "Variant Sort Order",
+            "en-GB": "Variant Sort Order",
+            "de-DE": "Variantenreihenfolge",
+            "fr-FR": "Ordre de tri des variantes",
+            "nl-NL": "Sorteervolgorde varianten",
+            "es-ES": "Orden de clasificación de variantes",
+            "pt-PT": "Ordem de classificação de variantes",
+            "it-IT": "Ordine di ordinamento varianti"
+          },
+          "kind": "group",
+          "children": [
+            {
+              "key": "attributeName",
+              "label": {
+                "en-US": "Attribute Name",
+                "en-GB": "Attribute Name",
+                "de-DE": "Attributname",
+                "fr-FR": "Nom de l'attribut",
+                "nl-NL": "Attribuutnaam",
+                "es-ES": "Nombre del atributo",
+                "pt-PT": "Nome do atributo",
+                "it-IT": "Nome attributo"
+              },
+              "kind": "text"
+            }
+          ]
+        },
+        {
+          "key": "variantSelectorIgnorelist",
+          "label": {
+            "en-US": "Variant Selector Ignore List",
+            "en-GB": "Variant Selector Ignore List",
+            "de-DE": "Ausschlussliste für Variantenauswahl",
+            "es-ES": "Lista de exclusión del selector de variantes",
+            "fr-FR": "Liste d'exclusion du sélecteur de variantes",
+            "it-IT": "Elenco di esclusione del selettore varianti",
+            "pt-PT": "Lista de exclusão do seletor de variantes",
+            "nl-NL": "Uitsluitingslijst voor variantselector"
+          },
+          "kind": "group",
+          "children": [
+            {
+              "key": "attributeName",
+              "label": {
+                "en-US": "Attribute Name",
+                "en-GB": "Attribute Name",
+                "de-DE": "Attributname",
+                "es-ES": "Nombre del atributo",
+                "fr-FR": "Nom de l'attribut",
+                "it-IT": "Nome attributo",
+                "pt-PT": "Nome do atributo",
+                "nl-NL": "Attribuutnaam"
+              },
+              "kind": "text"
+            }
+          ]
+        }
+      ],
+      "pageTypes": [
+        "pdp"
+      ]
+    },
+    {
+      "type": "product/add-to-cart",
+      "name": {
+        "en-US": "Add to cart",
+        "en-GB": "Add to cart",
+        "de-DE": "In den Warenkorb",
+        "fr-FR": "Ajouter au panier",
+        "nl-NL": "Toevoegen aan winkelwagen",
+        "es-ES": "Añadir al carrito",
+        "pt-PT": "Adicionar ao carrinho",
+        "it-IT": "Aggiungi al carrello"
+      },
+      "icon": "AddShoppingCart",
+      "groupKey": "product",
+      "schema": [
+        {
+          "key": "product",
+          "label": {
+            "en-US": "Product",
+            "en-GB": "Product",
+            "de-DE": "Produkt",
+            "fr-FR": "Produit",
+            "nl-NL": "Product",
+            "es-ES": "Producto",
+            "pt-PT": "Produto",
+            "it-IT": "Prodotto"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/product"
+        }
+      ],
+      "pageTypes": [
+        "pdp"
+      ]
+    },
+    {
+      "type": "product/related-products",
+      "name": {
+        "en-US": "Related products",
+        "en-GB": "Related products",
+        "de-DE": "Ähnliche Produkte",
+        "fr-FR": "Produits associés",
+        "nl-NL": "Gerelateerde producten",
+        "es-ES": "Productos relacionados",
+        "pt-PT": "Produtos relacionados",
+        "it-IT": "Prodotti correlati"
+      },
+      "icon": "ViewCarousel",
+      "groupKey": "product",
+      "schema": [
+        {
+          "key": "title",
+          "label": {
+            "en-US": "Title",
+            "en-GB": "Title",
+            "de-DE": "Titel",
+            "fr-FR": "Titre",
+            "nl-NL": "Titel",
+            "es-ES": "Título",
+            "pt-PT": "Título",
+            "it-IT": "Titolo"
+          },
+          "kind": "text",
+          "localized": true
+        },
+        {
+          "key": "related",
+          "label": {
+            "en-US": "Related products",
+            "en-GB": "Related products",
+            "de-DE": "Ähnliche Produkte",
+            "fr-FR": "Produits associés",
+            "nl-NL": "Gerelateerde producten",
+            "es-ES": "Productos relacionados",
+            "pt-PT": "Produtos relacionados",
+            "it-IT": "Prodotti correlati"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "product/related"
+        }
+      ],
+      "pageTypes": [
+        "pdp"
+      ]
+    },
+    {
+      "type": "product/product-carousel",
+      "name": {
+        "en-US": "Product carousel",
+        "en-GB": "Product carousel",
+        "de-DE": "Produkt-Karussell",
+        "fr-FR": "Carrousel de produits",
+        "nl-NL": "Productcarrousel",
+        "es-ES": "Carrusel de productos",
+        "pt-PT": "Carrossel de produtos",
+        "it-IT": "Carosello prodotti"
+      },
+      "icon": "ViewCarousel",
+      "groupKey": "product",
+      "schema": [
+        {
+          "key": "title",
+          "label": {
+            "en-US": "Title",
+            "en-GB": "Title",
+            "de-DE": "Titel",
+            "fr-FR": "Titre",
+            "nl-NL": "Titel",
+            "es-ES": "Título",
+            "pt-PT": "Título",
+            "it-IT": "Titolo"
+          },
+          "kind": "richtext",
+          "localized": true
+        },
+        {
+          "key": "label",
+          "label": {
+            "en-US": "Label",
+            "en-GB": "Label",
+            "de-DE": "Beschriftung",
+            "fr-FR": "Libellé",
+            "nl-NL": "Label",
+            "es-ES": "Etiqueta",
+            "pt-PT": "Etiqueta",
+            "it-IT": "Etichetta"
+          },
+          "kind": "text",
+          "localized": true
+        },
+        {
+          "key": "target",
+          "label": {
+            "en-US": "Target",
+            "en-GB": "Target",
+            "de-DE": "Ziel",
+            "fr-FR": "Cible",
+            "nl-NL": "Doel",
+            "es-ES": "Destino",
+            "pt-PT": "Destino",
+            "it-IT": "Destinazione"
+          },
+          "kind": "link"
+        },
+        {
+          "key": "products",
+          "label": {
+            "en-US": "Products",
+            "en-GB": "Products",
+            "de-DE": "Produkte",
+            "fr-FR": "Produits",
+            "nl-NL": "Producten",
+            "es-ES": "Productos",
+            "pt-PT": "Produtos",
+            "it-IT": "Prodotti"
+          },
+          "kind": "dataSource",
+          "dataSourceType": "commercetools/product-list"
+        }
+      ],
+      "pageTypes": [
+        "all"
+      ]
+    }
+  ]
+}

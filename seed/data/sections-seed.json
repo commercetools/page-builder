@@ -1,0 +1,79 @@
+{
+  "sections": [
+    {
+      "id": "HEAD",
+      "name": {
+        "en-US": "Head",
+        "en-GB": "Head",
+        "de-DE": "Kopf",
+        "fr-FR": "En-tête",
+        "nl-NL": "Koptekst",
+        "es-ES": "Cabecera",
+        "pt-PT": "Cabeçalho",
+        "it-IT": "Intestazione"
+      },
+      "description": {
+        "en-US": "Announcement bars, global notices. Shown at the very top of every page render.",
+        "en-GB": "Announcement bars, global notices. Shown at the very top of every page render.",
+        "de-DE": "Ankündigungsleisten, globale Hinweise. Wird ganz oben auf jeder Seite angezeigt.",
+        "fr-FR": "Barres d'annonce, avis globaux. Affiché tout en haut de chaque page.",
+        "nl-NL": "Aankondigingsbalkjes, globale meldingen. Weergegeven helemaal bovenaan elke pagina.",
+        "es-ES": "Barras de anuncios, avisos globales. Se muestra en la parte superior de cada página.",
+        "pt-PT": "Barras de anúncios, avisos globais. Exibido no topo de cada página.",
+        "it-IT": "Barre di annunci, avvisi globali. Mostrato nella parte superiore di ogni pagina."
+      },
+      "icon": "VerticalAlignTop",
+      "pageTypes": ["all"]
+    },
+    {
+      "id": "MAIN",
+      "name": {
+        "en-US": "Main",
+        "en-GB": "Main",
+        "de-DE": "Hauptbereich",
+        "fr-FR": "Principal",
+        "nl-NL": "Hoofdinhoud",
+        "es-ES": "Principal",
+        "pt-PT": "Principal",
+        "it-IT": "Principale"
+      },
+      "description": {
+        "en-US": "The primary content of the page. Most layout elements and components live here.",
+        "en-GB": "The primary content of the page. Most layout elements and components live here.",
+        "de-DE": "Der Hauptinhalt der Seite. Die meisten Layout-Elemente und Komponenten befinden sich hier.",
+        "fr-FR": "Le contenu principal de la page. La plupart des éléments de mise en page et des composants se trouvent ici.",
+        "nl-NL": "De primaire inhoud van de pagina. De meeste lay-outelementen en componenten bevinden zich hier.",
+        "es-ES": "El contenido principal de la página. La mayoría de los elementos de diseño y componentes están aquí.",
+        "pt-PT": "O conteúdo principal da página. A maioria dos elementos de layout e componentes estão aqui.",
+        "it-IT": "Il contenuto principale della pagina. La maggior parte degli elementi di layout e dei componenti si trova qui."
+      },
+      "icon": "ViewAgenda",
+      "pageTypes": ["all"]
+    },
+    {
+      "id": "FOOTER",
+      "name": {
+        "en-US": "Footer",
+        "en-GB": "Footer",
+        "de-DE": "Fußzeile",
+        "fr-FR": "Pied de page",
+        "nl-NL": "Voettekst",
+        "es-ES": "Pie de página",
+        "pt-PT": "Rodapé",
+        "it-IT": "Piè di pagina"
+      },
+      "description": {
+        "en-US": "Global footer content — newsletter, links, store info.",
+        "en-GB": "Global footer content — newsletter, links, store info.",
+        "de-DE": "Globaler Fußzeileninhalt — Newsletter, Links, Store-Informationen.",
+        "fr-FR": "Contenu global du pied de page — newsletter, liens, informations du magasin.",
+        "nl-NL": "Globale voettekstinhoud — nieuwsbrief, links, winkelinformatie.",
+        "es-ES": "Contenido global del pie de página — boletín, enlaces, información de la tienda.",
+        "pt-PT": "Conteúdo global do rodapé — newsletter, links, informações da loja.",
+        "it-IT": "Contenuto globale del piè di pagina — newsletter, link, informazioni del negozio."
+      },
+      "icon": "VerticalAlignBottom",
+      "pageTypes": ["all"]
+    }
+  ]
+}

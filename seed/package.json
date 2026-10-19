@@ -1,0 +1,19 @@
+{
+  "name": "@commercetools-labs/pages-editor-seed",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Seed scripts for the Pages Editor CT custom objects",
+  "scripts": {
+    "data-sources": "node scripts/seed-data-sources.js",
+    "components": "node scripts/seed-components.js",
+    "sections": "node scripts/seed-sections.js",
+    "pages": "node scripts/seed-pages.js",
+    "all": "node scripts/seed-data-sources.js && node scripts/seed-components.js && node scripts/seed-sections.js && node scripts/seed-pages.js",
+    "download:data-sources": "node scripts/download-data-sources.js",
+    "download:components": "node scripts/download-components.js",
+    "download:sections": "node scripts/download-sections.js",
+    "download:pages": "node scripts/download-pages.js",
+    "download:all": "node scripts/download-components.js && node scripts/download-sections.js && node scripts/download-data-sources.js && node scripts/download-pages.js"
+  },
+  "license": "MIT"
+}

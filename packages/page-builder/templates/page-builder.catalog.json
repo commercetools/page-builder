@@ -1,0 +1,117 @@
+{
+  "components": {
+    "groups": [
+      {
+        "key": "content",
+        "name": {
+          "en": "Content"
+        }
+      },
+      {
+        "key": "product",
+        "name": {
+          "en": "Product"
+        }
+      }
+    ],
+    "components": [
+      {
+        "type": "content/hero",
+        "name": {
+          "en": "Hero"
+        },
+        "icon": "image",
+        "groupKey": "content",
+        "pageTypes": [
+          "all"
+        ],
+        "schema": [
+          {
+            "key": "heading",
+            "label": {
+              "en": "Heading"
+            },
+            "kind": "text",
+            "localized": true
+          },
+          {
+            "key": "subheading",
+            "label": {
+              "en": "Subheading"
+            },
+            "kind": "text",
+            "localized": true
+          },
+          {
+            "key": "image",
+            "label": {
+              "en": "Image"
+            },
+            "kind": "image"
+          }
+        ]
+      },
+      {
+        "type": "content/rich-text",
+        "name": {
+          "en": "Rich text"
+        },
+        "icon": "text",
+        "groupKey": "content",
+        "pageTypes": [
+          "all"
+        ],
+        "schema": [
+          {
+            "key": "body",
+            "label": {
+              "en": "Body"
+            },
+            "kind": "richtext",
+            "localized": true
+          }
+        ]
+      },
+      {
+        "type": "product/product-grid",
+        "name": {
+          "en": "Product grid"
+        },
+        "icon": "grid",
+        "groupKey": "product",
+        "pageTypes": [
+          "category",
+          "static"
+        ],
+        "schema": [
+          {
+            "key": "columns",
+            "label": {
+              "en": "Columns"
+            },
+            "kind": "number"
+          }
+        ]
+      },
+      {
+        "type": "product/pdp-gallery",
+        "name": {
+          "en": "PDP gallery"
+        },
+        "icon": "image",
+        "groupKey": "product",
+        "pageTypes": [
+          "pdp"
+        ],
+        "schema": []
+      }
+    ]
+  },
+  "data-sources": {
+    "groups": [],
+    "sources": []
+  },
+  "sections": {
+    "sections": []
+  }
+}

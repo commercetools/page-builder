@@ -1,0 +1,83 @@
+{
+  "name": "@commercetools-labs/page-builder",
+  "version": "0.9.0",
+  "description": "Host-side page-builder SDK: the render runtime (transform/resolve engine, registry primitives, React grid, visual-editing bridge) plus the CLI that syncs component/data-source/section definitions into commercetools, and the shared contract types.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "page-builder": "./dist/cli.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
+    },
+    "./bridge": {
+      "types": "./dist/react/visual-editing-bridge.d.ts",
+      "default": "./dist/react/visual-editing-bridge.js"
+    },
+    "./contract": {
+      "types": "./dist/contract.d.ts",
+      "default": "./dist/contract.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "default": "./dist/core/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "commercetools",
+    "page-builder",
+    "custom-objects",
+    "storefront"
+  ],
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.6",
+    "@types/node": "^20.11.0",
+    "@types/react": "^19.0.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "jsdom": "^29.1.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.2.8",
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.11"
+  },
+  "dependencies": {
+    "xss": "^1.0.15"
+  }
+}

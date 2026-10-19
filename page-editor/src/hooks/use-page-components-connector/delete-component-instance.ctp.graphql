@@ -1,0 +1,9 @@
+mutation DeleteComponentInstance(
+  $container: String!
+  $key: String!
+  $version: Long
+) {
+  deleteCustomObject(container: $container, key: $key, version: $version) {
+    id
+  }
+}

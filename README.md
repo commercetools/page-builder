@@ -1,6 +1,10 @@
 # Page builder
 
-A Merchant Center Custom Application that gives content and merchandising teams a visual way to build and manage storefront pages. Component types, data source types, and page-section presets are defined once in host (storefront) code and pushed in by the `@commercetools-demo/page-builder` npm package; content authors then compose pages from that catalog on a drag-and-drop canvas and publish — all stored as commercetools custom objects that the same npm package renders at request time in the storefront.
+A Merchant Center Custom Application that gives content and merchandising teams a visual way to build and manage storefront pages. Component types, data source types, and page-section presets are defined once in host (storefront) code and pushed in by the `@commercetools-labs/page-builder` npm package; content authors then compose pages from that catalog on a drag-and-drop canvas and publish — all stored as commercetools custom objects that the same npm package renders at request time in the storefront.
+
+Use it when your storefront pages are built from a fixed set of components and you want merchandisers and content editors to assemble and publish them without a developer release. Developers define the components and data feeds once in code; editors then compose pages visually inside the Merchant Center, and the storefront renders what they publish.
+
+> Freely available under the MIT license, shared as-is, and not supported by commercetools — see [SUPPORT.md](SUPPORT.md). Issues and pull requests are welcome, and we'll look when we can.
 
 This repo serves two audiences:
 
@@ -16,7 +20,7 @@ The app has two main areas:
 | **Pages** | `/pages` | Browse the page tree, inspect per-page builder status, and open the builder |
 | **Page Builder** | `/builder/:pageId` | Drag-and-drop canvas for composing a page from layout sections, components, and data sources |
 
-There is no in-app editor for component types, data source types, or section presets — those catalogs are authored in host code and synced in via the `@commercetools-demo/page-builder` CLI (see [Catalogs](#catalogs-components-data-sources-sections) and [Host integration](#host-integration)). This app only reads the *published* catalog to populate the Page Builder's palette, data-source picker, and section options.
+There is no in-app editor for component types, data source types, or section presets — those catalogs are authored in host code and synced in via the `@commercetools-labs/page-builder` CLI (see [Catalogs](#catalogs-components-data-sources-sections) and [Host integration](#host-integration)). This app only reads the *published* catalog to populate the Page Builder's palette, data-source picker, and section options.
 
 Pages, and saved data source instances, still follow the same **draft → publish** pattern: every save appends to a version history inside that object's custom object; publishing updates the same object's `published` field, which is what the storefront reads.
 
@@ -42,6 +46,7 @@ Pages, and saved data source instances, still follow the same **draft → publis
 
 ```bash
 cd page-editor
+cp .env.example .env   # then fill in your application id, URL and project key
 yarn install
 yarn start
 ```
@@ -69,7 +74,7 @@ All dev commands run from the `page-editor/` directory:
 
 Seed scripts live in `seed/` — a standalone directory separate from the webapp. They have no runtime dependencies and use only Node.js built-ins.
 
-Components, data sources, and sections are normally supplied by host code via the `@commercetools-demo/page-builder` CLI (see [Host integration](#host-integration)) — these scripts are a quick way to put sample catalogs on a fresh CT project before a host repo exists. Pages need seeding (or authoring) either way.
+Components, data sources, and sections are normally supplied by host code via the `@commercetools-labs/page-builder` CLI (see [Host integration](#host-integration)) — these scripts are a quick way to put sample catalogs on a fresh CT project before a host repo exists. Pages need seeding (or authoring) either way.
 
 ### 1. Create a CT API client
 
@@ -174,7 +179,7 @@ Selecting a category in Pages exposes a **PLP / PDP** toggle. The right panel sh
 
 ### Shared mental model
 
-Developers shape the **vocabulary** in host (storefront) code — a `catalog.ts` defines component types (what fields exist) and data source types (what data can be fetched), pushed into CT by the `@commercetools-demo/page-builder` CLI. Content authors **assemble** with it in this app — they drag components onto the canvas and bind saved data sources to component slots. The component, data-source, and section catalogs stored in CT custom objects are the single source of truth every host and this app share.
+Developers shape the **vocabulary** in host (storefront) code — a `catalog.ts` defines component types (what fields exist) and data source types (what data can be fetched), pushed into CT by the `@commercetools-labs/page-builder` CLI. Content authors **assemble** with it in this app — they drag components onto the canvas and bind saved data sources to component slots. The component, data-source, and section catalogs stored in CT custom objects are the single source of truth every host and this app share.
 
 ---
 
@@ -267,7 +272,7 @@ The menu bar is split into discrete affordances:
 
 ## Catalogs: components, data sources, sections
 
-Component types, data source types, and section presets are **defined in host (storefront) code, not in this app**. A host's `catalog.ts` declares them with the SDK's `defineBlock`/`defineDataSource` helpers, and the `@commercetools-demo/page-builder` CLI pushes them into this app's CT project as three custom objects — `components`, `data-sources`, `sections` — that the Page Builder canvas reads to populate its component palette, data-source picker, and section options. See [Host integration](#host-integration) for how a host defines and syncs them.
+Component types, data source types, and section presets are **defined in host (storefront) code, not in this app**. A host's `catalog.ts` declares them with the SDK's `defineBlock`/`defineDataSource` helpers, and the `@commercetools-labs/page-builder` CLI pushes them into this app's CT project as three custom objects — `components`, `data-sources`, `sections` — that the Page Builder canvas reads to populate its component palette, data-source picker, and section options. See [Host integration](#host-integration) for how a host defines and syncs them.
 
 There's no separate editor screen for these in this app — if a catalog hasn't been synced yet, its palette/picker is simply empty.
 
@@ -339,16 +344,16 @@ A `savedForReuse: true` instance is a shared, project-wide resource — editing 
 
 ## Host integration
 
-Storefronts render page-builder content, and push their component/data-source/section catalog into this app, via the **`@commercetools-demo/page-builder`** npm package (`packages/page-builder` in this repo). Full API reference: [`packages/page-builder/README.md`](packages/page-builder/README.md). Normative contract: [`docs/sdd/definitions-contract.md`](docs/sdd/definitions-contract.md).
+Storefronts render page-builder content, and push their component/data-source/section catalog into this app, via the **`@commercetools-labs/page-builder`** npm package (`packages/page-builder` in this repo). Full API reference: [`packages/page-builder/README.md`](packages/page-builder/README.md). Normative contract: [`docs/sdd/definitions-contract.md`](docs/sdd/definitions-contract.md).
 
 ```sh
-npm i @commercetools-demo/page-builder
+npm i @commercetools-labs/page-builder
 ```
 
 ### Scaffold a new integration
 
 ```sh
-npx @commercetools-demo/page-builder init
+npx @commercetools-labs/page-builder init
 ```
 
 Copies a starter `catalog.ts` + `registry.tsx` + `sections.tsx` + bridge mount + placeholder blocks + `.env.example` into the current repo — new files only, never edits existing code.
@@ -409,7 +414,7 @@ Known gaps identified during a codebase review (July 2026), grouped by priority.
 
 ### Delivery / last mile
 
-- [ ] **Ship a committed storefront consumer.** Publishing only writes the `page-<id>` custom object (`use-page-builder-connector.ts`); the `@commercetools-demo/page-builder` SDK can render it, but no running host in this repo actually reads published objects, and the reference hosts have `DYNAMIC_PAGES` off (hardcoded fallbacks). Wire at least one host to read live published pages end-to-end.
+- [ ] **Ship a committed storefront consumer.** Publishing only writes the `page-<id>` custom object (`use-page-builder-connector.ts`); the `@commercetools-labs/page-builder` SDK can render it, but no running host in this repo actually reads published objects, and the reference hosts have `DYNAMIC_PAGES` off (hardcoded fallbacks). Wire at least one host to read live published pages end-to-end.
 - [ ] **Media library / asset upload.** Image fields are URL-paste only (`shared/field-editor.tsx`) — add file upload and an asset picker.
 - [ ] **In-app dynamic-data resolution (at least for preview).** Dynamic pages store product/category IDs but never resolve them in-app; resolution is deferred entirely to the host.
 
@@ -460,7 +465,7 @@ page-editor/                  # Merchant Center Custom Application (the webapp)
       use-categories-connector/            # CT hooks — category tree
 
 packages/
-  page-builder/                # @commercetools-demo/page-builder — render runtime + CLI + contract (see Host integration)
+  page-builder/                # @commercetools-labs/page-builder — render runtime + CLI + contract (see Host integration)
 
 openspec/                     # Behavior specs — authoritative for what the app does today
   specs/                      # One directory per capability (22), each with a spec.md

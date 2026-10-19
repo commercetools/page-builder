@@ -1,0 +1,10 @@
+mutation UpsertImagePickerToken($draft: CustomObjectDraft!) {
+  createOrUpdateCustomObject(draft: $draft) {
+    id
+    key
+    container
+    version
+    value
+    lastModifiedAt
+  }
+}

@@ -1,0 +1,24 @@
+query SearchProducts($query: SearchQueryInput!, $limit: Int = 10, $locale: Locale!) {
+  productsSearch(query: $query, limit: $limit, markMatchingVariants: true) {
+    results {
+      id
+      product {
+        id
+        key
+        masterData {
+          current {
+            name(locale: $locale)
+            allVariants(onlyMatching: true) {
+              id
+              sku
+              key
+              images {
+                url
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

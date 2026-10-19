@@ -1,0 +1,270 @@
+{
+  "page": {
+    "HEAD": [],
+    "MAIN": [
+      {
+        "id": "main-1",
+        "kind": "layout",
+        "width": "1/1",
+        "name": {
+          "en-US": "Hero",
+          "en-GB": "Hero",
+          "de-DE": "Hero",
+          "fr-FR": "Hero",
+          "nl-NL": "Hero",
+          "es-ES": "Hero",
+          "pt-PT": "Hero",
+          "it-IT": "Hero"
+        },
+        "visibility": {
+          "mobile": true,
+          "tablet": true,
+          "desktop": true
+        },
+        "style": "charcoal",
+        "children": [
+          {
+            "id": "main-1-comp-0",
+            "type": "content/hero",
+            "name": {
+              "en-US": "Hero banner",
+              "en-GB": "Hero banner",
+              "de-DE": "Hero-Banner",
+              "fr-FR": "Bannière héro",
+              "nl-NL": "Héro-banner",
+              "es-ES": "Banner hero",
+              "pt-PT": "Banner hero",
+              "it-IT": "Banner hero"
+            },
+            "visibility": {
+              "mobile": true,
+              "tablet": true,
+              "desktop": true
+            },
+            "settings": {
+              "image": "https://storage.googleapis.com/merchant-center-europe/sample-data/b2c-lifestyle/Canela_Three_Seater_Sofa-1.1.jpeg",
+              "title": {
+                "en-US": "<p>Design Your</p><p><strong>Perfect Space</strong></p>",
+                "en-GB": "<p>Design Your</p><p><strong>Perfect Space</strong></p>",
+                "de-DE": "<p>Gestalten Sie Ihren</p><p><strong>perfekten Raum</strong></p>",
+                "fr-FR": "<p>Concevez Votre</p><p><strong>Espace Parfait</strong></p>",
+                "nl-NL": "<p>Ontwerp Uw</p><p><strong>Perfecte Ruimte</strong></p>",
+                "es-ES": "<p>Diseña Tu</p><p><strong>Espacio Perfecto</strong></p>",
+                "pt-PT": "<p>Crie o Seu</p><p><strong>Espaço Perfeito</strong></p>",
+                "it-IT": "<p>Progetta Il Tuo</p><p><strong>Spazio Perfetto</strong</p>>"
+              },
+              "subTitle": {
+                "en-US": "<p>Curated for Modern Living</p>",
+                "en-GB": "<p>Curated for Modern Living</p>",
+                "de-DE": "<p>Kuratiert für modernes Wohnen</p>",
+                "fr-FR": "<p>Sélectionné pour la vie moderne</p>",
+                "nl-NL": "<p>Samengesteld voor modern leven</p>",
+                "es-ES": "<p>Seleccionado para la vida moderna</p>",
+                "pt-PT": "<p>Selecionado para a vida moderna</p>",
+                "it-IT": "<p>Selezionato per la vita modern</p>a"
+              },
+              "text": {
+                "en-US": "<p>Premium furniture and home goods, thoughtfully selected for the modern home.</p>",
+                "en-GB": "<p>Premium furniture and home goods, thoughtfully selected for the modern home.</p>",
+                "de-DE": "<p>Premium-Möbel und Wohnaccessoires, sorgfältig für das moderne Zuhause ausgewählt.</p>",
+                "fr-FR": "<p>Meubles et accessoires de maison haut de gamme, soigneusement sélectionnés pour le foyer moderne.</p>",
+                "nl-NL": "<p>Premium meubels en woonaccessoires, doordacht geselecteerd voor het moderne huis.</p>",
+                "es-ES": "<p>Muebles y artículos para el hogar premium, cuidadosamente seleccionados para el hogar moderno.</p>",
+                "pt-PT": "<p>Móveis e artigos para casa premium, criteriosamente selecionados para o lar moderno.</p>",
+                "it-IT": "<p>Mobili e articoli per la casa premium, accuratamente selezionati per la casa moderna</p>."
+              },
+              "buttons": [
+                {
+                  "target": "/category/furniture",
+                  "style": {
+                    "en-US": "primary",
+                    "en-GB": "primary",
+                    "de-DE": "primary",
+                    "fr-FR": "primary",
+                    "nl-NL": "primary",
+                    "es-ES": "primary",
+                    "pt-PT": "primary",
+                    "it-IT": "primary"
+                  },
+                  "label": {
+                    "en-US": "Shop Furniture",
+                    "en-GB": "Shop Furniture",
+                    "de-DE": "Möbel kaufen",
+                    "fr-FR": "Acheter des meubles",
+                    "nl-NL": "Meubels kopen",
+                    "es-ES": "Comprar muebles",
+                    "pt-PT": "Comprar móveis",
+                    "it-IT": "Acquista mobili"
+                  }
+                },
+                {
+                  "target": "/category/home-decor",
+                  "style": {
+                    "en-US": "outline",
+                    "en-GB": "outline",
+                    "de-DE": "outline",
+                    "fr-FR": "outline",
+                    "nl-NL": "outline",
+                    "es-ES": "outline",
+                    "pt-PT": "outline",
+                    "it-IT": "outline"
+                  },
+                  "label": {
+                    "en-US": "Home Decor",
+                    "en-GB": "Home Décor",
+                    "de-DE": "Wohndekoration",
+                    "fr-FR": "Décoration intérieure",
+                    "nl-NL": "Woondecoratie",
+                    "es-ES": "Decoración del hogar",
+                    "pt-PT": "Decoração de casa",
+                    "it-IT": "Arredamento per la casa"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "layout-1778232413255",
+        "kind": "layout",
+        "width": "1/1",
+        "name": {
+          "en-US": "Category Block",
+          "en-GB": "Category Block",
+          "de-DE": "Kategorieblock",
+          "fr-FR": "Bloc catégories",
+          "nl-NL": "Categorieblok",
+          "es-ES": "Bloque de categorías",
+          "pt-PT": "Bloco de categorias",
+          "it-IT": "Blocco categorie"
+        },
+        "visibility": {
+          "mobile": true,
+          "tablet": true,
+          "desktop": true
+        },
+        "children": [
+          {
+            "id": "layout-1778232413255-comp-1778232416489",
+            "type": "category/category-carousel",
+            "name": {
+              "en-US": "Category carousel",
+              "en-GB": "Category carousel",
+              "de-DE": "Kategorie-Karussell",
+              "fr-FR": "Carrousel de catégories",
+              "nl-NL": "Categoriecarrousel",
+              "es-ES": "Carrusel de categorías",
+              "pt-PT": "Carrossel de categorias",
+              "it-IT": "Carosello categorie"
+            },
+            "visibility": {
+              "mobile": true,
+              "tablet": true,
+              "desktop": true
+            },
+            "settings": {
+              "categories": "ds_mows26hi_olbm",
+              "title": {
+                "en-US": "<p>Shop by Category</p>",
+                "en-GB": "<p>Shop by Category</p>",
+                "de-DE": "<p>Nach Kategorie einkaufen</p>",
+                "fr-FR": "<p>Acheter par catégorie</p>",
+                "nl-NL": "<p>Winkelen per categorie</p>",
+                "es-ES": "<p>Comprar por categoría</p>",
+                "pt-PT": "<p>Comprar por categoria</p>",
+                "it-IT": "<p>Acquista per categoria</p>"
+              }
+            }
+          },
+          {
+            "id": "layout-1778232413255-comp-1778243468204",
+            "type": "product/product-carousel",
+            "name": {
+              "en-US": "Product carousel",
+              "en-GB": "Product carousel",
+              "de-DE": "Produkt-Karussell",
+              "fr-FR": "Carrousel de produits",
+              "nl-NL": "Productcarrousel",
+              "es-ES": "Carrusel de productos",
+              "pt-PT": "Carrossel de produtos",
+              "it-IT": "Carosello prodotti"
+            },
+            "visibility": {
+              "mobile": true,
+              "tablet": true,
+              "desktop": true
+            },
+            "settings": {
+              "title": {
+                "en-US": "<p>New Arrivals</p>"
+              },
+              "label": {
+                "en-US": "View all →"
+              },
+              "target": "/search?sort=createdAt",
+              "products": "ds_mpcvck5d_hnqs"
+            }
+          }
+        ]
+      }
+    ],
+    "FOOTER": []
+  },
+  "dataSources": [
+    {
+      "id": "ds_mpcvck5d_hnqs",
+      "type": "commercetools/product-list",
+      "name": {
+        "en-US": "New Arrivals"
+      },
+      "config": {
+        "query": "",
+        "limit": 12,
+        "offset": "",
+        "categories": [],
+        
+        "sort": "name"
+      },
+      "savedForReuse": true
+    },
+    {
+      "id": "ds_mpcw6j29_eome",
+      "type": "commercetools/product-list",
+      "name": {
+        "en-US": "New Arrivals (12)"
+      },
+      "config": {
+        "query": "",
+        "limit": 12,
+        "offset": "",
+        "categories": [],
+        
+        "sort": {}
+      },
+      "savedForReuse": true
+    },
+    {
+      "id": "ds_mpfi40zc_dg5p",
+      "type": "commercetools/category",
+      "name": {
+        "en-US": "Current Category"
+      },
+      "config": {},
+      "savedForReuse": true
+    },
+    {
+      "id": "ds_mpfre6ms_ykt0",
+      "type": "commercetools/products-by-category",
+      "name": {
+        "en-US": "Products for Category"
+      },
+      "config": {
+        "limit": 24,
+        "offset": "",
+        "sort": {}
+      },
+      "savedForReuse": true
+    }
+  ]
+}
