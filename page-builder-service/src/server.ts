@@ -79,7 +79,7 @@ function registerAdminOrUnavailable(scope: FastifyInstance, config: ServiceConfi
   }
   scope.all('/v1/admin/*', async (_req, reply) =>
     reply.code(503).send({
-      error: { code: 'mc_auth_not_configured', message: 'PB_MC_ISSUER and PB_MC_AUDIENCE are not configured' },
+      error: { code: 'mc_auth_not_configured', message: 'PB_MC_ISSUER is not configured' },
     })
   );
 }

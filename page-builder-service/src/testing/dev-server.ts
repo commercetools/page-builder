@@ -20,7 +20,6 @@ seedContent(fake);
 const config = {
   ...loadConfig({
     PORT: process.env.PORT ?? '8080',
-    PB_BASE_PATH: process.env.PB_BASE_PATH ?? '/service',
     PB_PREVIEW_TOKEN: 'dev-preview',
     PB_ADMIN_SECRET: 'dev-admin',
     PB_EDITOR_ORIGINS: 'http://localhost:3001',

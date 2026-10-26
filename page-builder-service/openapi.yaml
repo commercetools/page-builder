@@ -10,7 +10,7 @@ info:
     storefront shim, CI catalog push, and (later) the Merchant Center app.
 
     Public URL: `{connect-url}/service/v1/...` — Connect does not strip the app endpoint, so
-    the service mounts all routes under `PB_BASE_PATH` (`/service` when deployed).
+    the service mounts all routes under `/service`, its Connect endpoint.
 
     Canonical shapes are described in `docs/sdd/canonical-shapes.md`; an incompatible change
     to any schema here increments `WireVersion`.

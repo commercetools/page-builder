@@ -26,9 +26,7 @@ Both are declared in one `connect.yaml`, so one connector deploys both into a pr
 |---|---|---|---|
 | `PB_RENDER_ORIGINS` | standard | yes | Server origins of every client allowed to render |
 | `PB_EDITOR_ORIGINS` | standard | yes | Merchant Center origin(s) allowed to embed and drive the editing bridge |
-| `PB_MC_ISSUER` | standard | no | The project region's MC API Gateway (cloud identifier or URL); unset disables the MC gateway |
-| `PB_MC_AUDIENCE` | standard | no | The service's own public **origin** (no path); set together with the issuer |
-| `PB_BASE_PATH` | standard | no | Must equal the Connect endpoint (`/service`) |
+| `PB_MC_ISSUER` | standard | no | The project region's MC API Gateway (cloud identifier or URL); unset disables the MC gateway. The JWT audience is the origin of `CONNECT_DEPLOYED_URL`, the service's public URL, which Connect provides (set it by hand only for local development) |
 | `PB_CACHE_TTL_SECONDS` | standard | no | Read cache, default 15, 0 disables; drafts are never cached |
 | `PB_FACET_ATTRIBUTES`, `PB_FACET_LIMIT` | standard | no | Which product attributes become listing facets |
 | `LOG_LEVEL` | standard | no | |
@@ -56,7 +54,7 @@ The app's content-security policy lists the origins it may frame (client preview
 
 1. Pick the region and the secrets; list every client origin.
 2. Stage and publish the connector, deploy the **service** with the origins and secrets.
-3. Read its URL. Set `PB_MC_AUDIENCE` to its origin and `PB_MC_ISSUER` to the region, redeploy.
+3. Read its URL (the editor needs it in step 5). Set `PB_MC_ISSUER` to the region and redeploy; the audience comes from the deployed URL Connect provides, so there is nothing to copy.
 4. Register the custom application in Merchant Center with a placeholder URL; take its id.
 5. Deploy the **editor** with the id, entry path, region, the service URL and `all` hooks.
 6. Update the registration with the editor's deployed URL.

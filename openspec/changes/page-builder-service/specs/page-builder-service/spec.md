@@ -191,7 +191,7 @@ The admin API (an object gateway over the page-builder custom objects) SHALL req
 - **THEN** it is rejected with 409 and the caller re-reads and retries
 
 #### Scenario: Not configured
-- **WHEN** the service has no MC issuer and audience configured
+- **WHEN** the service has no MC issuer configured
 - **THEN** every admin route answers 503 and the MC app keeps using the Merchant Center gateway
 
 ### Requirement: Catalog push authenticated by a secret

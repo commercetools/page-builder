@@ -348,6 +348,8 @@ export function testApp(
   if (options.content !== false) seedContent(fake);
   const config: ServiceConfig = {
     ...loadConfig({}),
+    // Tests address routes without the Connect prefix.
+    basePath: '',
     logLevel: 'silent',
     ct: CT_CONFIG,
     previewToken: 'preview-secret',

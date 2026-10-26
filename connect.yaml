@@ -35,10 +35,6 @@ deployAs:
     endpoint: /service
     configuration:
       standardConfiguration:
-        - key: PB_BASE_PATH
-          description: URL prefix the routes are mounted under; must equal the Connect endpoint
-          required: false
-          default: '/service'
         - key: PB_RENDER_ORIGINS
           description: comma-separated storefront server origins allowed to call the render API
           required: true
@@ -47,10 +43,7 @@ deployAs:
           required: true
           default: 'https://mc.europe-west1.gcp.commercetools.com'
         - key: PB_MC_ISSUER
-          description: Merchant Center API Gateway the MC app's JWTs come from, as a cloud identifier (gcp-eu, gcp-us, gcp-au, aws-eu, aws-us) or a URL; unset disables the Merchant Center admin API
-          required: false
-        - key: PB_MC_AUDIENCE
-          description: this service's public origin (https://host, no path) as the Merchant Center puts it in the JWT audience; the MC app forwards with the forward-url-origin audience policy
+          description: Merchant Center API Gateway the MC app's JWTs come from, as a cloud identifier (gcp-eu, gcp-us, gcp-au, aws-eu, aws-us) or a URL; the JWT audience is this service's own public origin, taken from the CONNECT_DEPLOYED_URL that Connect provides; unset disables the Merchant Center admin API
           required: false
         - key: PB_CACHE_TTL_SECONDS
           description: seconds to cache commercetools reads; preview and draft reads are never cached; 0 disables the cache

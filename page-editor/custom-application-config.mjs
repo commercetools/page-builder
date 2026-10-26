@@ -1,6 +1,13 @@
 import { PERMISSIONS } from './src/constants';
 
 /**
+ * Optional settings. A `${env:NAME}` placeholder throws when NAME is not set, which would fail the
+ * build and the start of the app for a setting that is optional, so optional values are read here
+ * and an unset one is an empty string (each means "not configured" in the app).
+ */
+const optionalEnv = (name) => process.env[name] ?? '';
+
+/**
  * @type {import('@commercetools-frontend/application-config').ConfigOptionsForCustomApplication}
  */
 const config = {
@@ -23,16 +30,16 @@ const config = {
     // service base URL — it MUST include the service's `/service` path prefix and carry
     // no trailing slash. Empty → `kind: 'image'` fields render a "not configured" note
     // instead of the picker.
-    imagePickerBaseUrl: '${env:IMAGE_PICKER_BASE_URL}',
+    imagePickerBaseUrl: optionalEnv('IMAGE_PICKER_BASE_URL'),
     // Namespaces media storage on the service (a path segment). Empty → 'default'.
-    imagePickerBusinessUnitKey: '${env:IMAGE_PICKER_BUSINESS_UNIT_KEY}',
+    imagePickerBusinessUnitKey: optionalEnv('IMAGE_PICKER_BUSINESS_UNIT_KEY'),
     // The page-builder service's public URL including its Connect path (e.g.
     // https://service-….commercetools.app/service). Empty → every hook uses the MC GraphQL gateway.
-    pageBuilderServiceUrl: '${env:PAGE_BUILDER_SERVICE_URL}',
+    pageBuilderServiceUrl: optionalEnv('PAGE_BUILDER_SERVICE_URL'),
     // Which hook families use the service: `all`, or a comma list of pages, page-components,
     // comments, workflows, page-workflow, preview-settings, data-sources, sections, components,
     // instances, reset. Empty → none. Lets the migration roll out (and back) one family at a time.
-    pageBuilderServiceHooks: '${env:PAGE_BUILDER_SERVICE_HOOKS}',
+    pageBuilderServiceHooks: optionalEnv('PAGE_BUILDER_SERVICE_HOOKS'),
   },
   oAuthScopes: {
     view: ['view_products'],

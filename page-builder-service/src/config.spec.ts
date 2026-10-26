@@ -50,14 +50,9 @@ describe('loadConfig', () => {
     expect(c.ct?.scopes).toBe('b');
   });
 
-  it.each([
-    ['', ''],
-    ['/', ''],
-    ['service', '/service'],
-    ['/service/', '/service'],
-    ['/a/b', '/a/b'],
-  ])('normalises PB_BASE_PATH %j to %j', (raw, expected) => {
-    expect(loadConfig({ PB_BASE_PATH: raw }).basePath).toBe(expected);
+  it('always mounts under the Connect endpoint and has no setting for it', () => {
+    expect(loadConfig({}).basePath).toBe('/service');
+    expect(loadConfig({ PB_BASE_PATH: '/elsewhere' }).basePath).toBe('/service');
   });
 
   it('parses facet settings', () => {
@@ -67,18 +62,12 @@ describe('loadConfig', () => {
     expect(problems({ PB_FACET_LIMIT: '-1' })).toEqual(['PB_FACET_LIMIT: "-1" must be an integer >= 0']);
   });
 
-  it('rejects an invalid PB_BASE_PATH', () => {
-    expect(problems({ PB_BASE_PATH: '/a b/?x' })).toEqual([
-      'PB_BASE_PATH: "/a b/?x" is not a valid path prefix',
-    ]);
-  });
-
   it('applies defaults in local development with nothing configured', () => {
     const c = loadConfig({});
     expect(c).toMatchObject({
       production: false,
       port: 8080,
-      basePath: '',
+      basePath: '/service',
       logLevel: 'info',
       ct: null,
       previewToken: undefined,
@@ -176,21 +165,28 @@ describe('loadConfig', () => {
     });
 
     it('maps a cloud identifier to the gateway URL and normalises the audience to an origin', () => {
-      expect(loadConfig({ PB_MC_ISSUER: 'gcp-eu', PB_MC_AUDIENCE: 'https://svc.example.com/service' }).mc).toEqual({
+      expect(loadConfig({ PB_MC_ISSUER: 'gcp-eu', CONNECT_DEPLOYED_URL: 'https://svc.example.com/service' }).mc).toEqual({
         issuer: 'https://mc-api.europe-west1.gcp.commercetools.com',
         audience: 'https://svc.example.com',
       });
     });
 
     it('accepts an issuer URL', () => {
-      expect(loadConfig({ PB_MC_ISSUER: 'https://mc-api.test/', PB_MC_AUDIENCE: 'https://svc.test' }).mc?.issuer).toBe('https://mc-api.test');
+      expect(loadConfig({ PB_MC_ISSUER: 'https://mc-api.test/', CONNECT_DEPLOYED_URL: 'https://svc.test' }).mc?.issuer).toBe('https://mc-api.test');
     });
 
-    it('requires both settings, and valid values', () => {
-      expect(() => loadConfig({ PB_MC_ISSUER: 'gcp-eu' })).toThrow('must be set together');
-      expect(() => loadConfig({ PB_MC_AUDIENCE: 'https://svc.test' })).toThrow('must be set together');
-      expect(() => loadConfig({ PB_MC_ISSUER: 'nowhere', PB_MC_AUDIENCE: 'https://svc.test' })).toThrow('neither a cloud identifier nor a URL');
-      expect(() => loadConfig({ PB_MC_ISSUER: 'gcp-eu', PB_MC_AUDIENCE: 'ftp://x' })).toThrow('PB_MC_AUDIENCE');
+    it('is not enabled by the deployed URL alone, which Connect always provides', () => {
+      expect(loadConfig({ CONNECT_DEPLOYED_URL: 'https://svc.test' }).mc).toBeNull();
+    });
+
+    it('needs the deployed URL when an issuer is set, and valid values', () => {
+      expect(() => loadConfig({ PB_MC_ISSUER: 'gcp-eu' })).toThrow('PB_MC_ISSUER requires CONNECT_DEPLOYED_URL');
+      expect(() => loadConfig({ PB_MC_ISSUER: 'nowhere', CONNECT_DEPLOYED_URL: 'https://svc.test' })).toThrow('neither a cloud identifier nor a URL');
+      expect(() => loadConfig({ PB_MC_ISSUER: 'gcp-eu', CONNECT_DEPLOYED_URL: 'ftp://x' })).toThrow('CONNECT_DEPLOYED_URL');
+    });
+
+    it('has no PB_MC_AUDIENCE setting', () => {
+      expect(loadConfig({ PB_MC_ISSUER: 'gcp-eu', CONNECT_DEPLOYED_URL: 'https://svc.test', PB_MC_AUDIENCE: 'https://other.test' }).mc?.audience).toBe('https://svc.test');
     });
   });
 });

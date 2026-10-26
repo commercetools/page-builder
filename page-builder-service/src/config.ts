@@ -20,7 +20,7 @@ export interface ServiceConfig {
   production: boolean;
   port: number;
   host: string;
-  /** URL prefix every route is mounted under; Connect does not strip the app's `endpoint`. */
+  /** URL prefix every route is mounted under: always `BASE_PATH`. Only tests override it. */
   basePath: string;
   logLevel: 'debug' | 'info' | 'warn' | 'error' | 'silent';
   ct: CtConfig | null;
@@ -51,6 +51,12 @@ export interface McConfig {
   audience: string;
 }
 
+/**
+ * The Connect `endpoint` of this application (`connect.yaml`). Connect does not strip it from the
+ * URL, so every route is mounted under it; it is fixed, not configurable.
+ */
+export const BASE_PATH = '/service';
+
 export class ConfigError extends Error {
   constructor(readonly problems: string[]) {
     super(`Invalid page-builder service configuration:\n${problems.map((p) => `  - ${p}`).join('\n')}`);
@@ -80,16 +86,6 @@ function withConnectAliases(
     CTP_API_URL: env.CTP_API_URL || (region ? `https://api.${region}.commercetools.com` : undefined),
     CTP_SCOPES: env.CTP_SCOPES || env.CTP_SCOPE,
   };
-}
-
-function normaliseBasePath(raw: string | undefined, problems: string[]): string {
-  const value = (raw ?? '').trim();
-  if (value === '' || value === '/') return '';
-  if (!/^\/?[A-Za-z0-9_-]+(\/[A-Za-z0-9_-]+)*\/?$/.test(value)) {
-    problems.push(`PB_BASE_PATH: "${raw}" is not a valid path prefix`);
-    return '';
-  }
-  return `/${value.replace(/^\/+|\/+$/g, '')}`;
 }
 
 /** Custom objects (read + write) plus the commercetools reads the resolvers perform. */
@@ -212,7 +208,6 @@ export function loadConfig(rawEnv: Record<string, string | undefined> = process.
   const ct = loadCt(env, production, problems);
   const renderOrigins = origins(env.PB_RENDER_ORIGINS, 'PB_RENDER_ORIGINS', problems);
   const editorOrigins = origins(env.PB_EDITOR_ORIGINS, 'PB_EDITOR_ORIGINS', problems);
-  const basePath = normaliseBasePath(env.PB_BASE_PATH, problems);
   const facetLimit = parseFacetLimit(env, problems);
   const mc = loadMc(env, problems);
   const renderKey = env.PB_RENDER_KEY || undefined;
@@ -226,7 +221,7 @@ export function loadConfig(rawEnv: Record<string, string | undefined> = process.
     production,
     port,
     host: env.HOST ?? '0.0.0.0',
-    basePath,
+    basePath: BASE_PATH,
     logLevel,
     ct,
     previewToken: env.PB_PREVIEW_TOKEN || undefined,
@@ -243,10 +238,12 @@ export function loadConfig(rawEnv: Record<string, string | undefined> = process.
 
 function loadMc(env: Record<string, string | undefined>, problems: string[]): McConfig | null {
   const issuerRaw = env.PB_MC_ISSUER?.trim();
-  const audienceRaw = env.PB_MC_AUDIENCE?.trim();
-  if (!issuerRaw && !audienceRaw) return null;
-  if (!issuerRaw || !audienceRaw) {
-    problems.push('PB_MC_ISSUER and PB_MC_AUDIENCE must be set together');
+  if (!issuerRaw) return null;
+  // Connect provides the service's public URL; locally a developer sets it. The Merchant Center
+  // puts its origin in the JWT audience, so the origin is all that is used.
+  const deployedUrl = env.CONNECT_DEPLOYED_URL?.trim();
+  if (!deployedUrl) {
+    problems.push('PB_MC_ISSUER requires CONNECT_DEPLOYED_URL, the service\'s public URL (set by Connect; set it yourself for local development)');
     return null;
   }
   const issuer = MC_ISSUERS[issuerRaw] ?? trimSlash(issuerRaw);
@@ -256,6 +253,6 @@ function loadMc(env: Record<string, string | undefined>, problems: string[]): Mc
     problems.push(`PB_MC_ISSUER: "${issuerRaw}" is neither a cloud identifier nor a URL`);
     return null;
   }
-  const audience = parseOrigin(audienceRaw, 'PB_MC_AUDIENCE', problems);
+  const audience = parseOrigin(deployedUrl, 'CONNECT_DEPLOYED_URL', problems);
   return audience ? { issuer, audience } : null;
 }

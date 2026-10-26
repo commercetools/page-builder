@@ -31,7 +31,7 @@ storefront shim are generated from it (`npm run generate:api`; a test fails if t
 | `/v1/admin/objects/…` | Merchant Center app | MC-user JWT forwarded by the MC API Gateway |
 | `GET /status` (alias `/healthz`) | Connect liveness | none |
 
-Everything is mounted under `PB_BASE_PATH` (`/service`): Connect does not strip the application endpoint.
+Everything is mounted under `/service`, the application's Connect `endpoint`: Connect does not strip it from the URL, so the prefix is fixed rather than configurable.
 
 ### Render
 
@@ -52,7 +52,7 @@ The host owns its component, data-source and section definitions as one JSON fil
 
 The MC app holds no custom-object permission. It calls `/v1/admin/objects/{container}[/{key}]` (get, list with
 a commercetools `where`, put with optimistic `version`, delete) through `/proxy/forward-to`. The service
-verifies the gateway's RS256 JWT against its JWKS (issuer `PB_MC_ISSUER`, audience `PB_MC_AUDIENCE`, and the
+verifies the gateway's RS256 JWT against its JWKS (issuer `PB_MC_ISSUER`, audience this service's own origin from `CONNECT_DEPLOYED_URL`, and the
 project-key claim must be this service's project), then:
 
 - only the four page-builder containers are reachable;
@@ -71,11 +71,9 @@ time and injects `CTP_PROJECT_KEY`, `CTP_CLIENT_ID`, `CTP_CLIENT_SECRET`, `CTP_S
 
 | Key | Kind | Required | Default | Purpose |
 |---|---|---|---|---|
-| `PB_BASE_PATH` | standard | no | `/service` | route prefix; must equal the Connect `endpoint` |
 | `PB_RENDER_ORIGINS` | standard | yes | | comma-separated storefront server origins allowed to call the render API |
 | `PB_EDITOR_ORIGINS` | standard | yes | `https://mc.europe-west1.gcp.commercetools.com` | Merchant Center origins allowed to embed and drive the visual-editing bridge |
-| `PB_MC_ISSUER` | standard | no | | MC API Gateway the admin JWTs come from (`gcp-eu`, `gcp-us`, `gcp-au`, `aws-eu`, `aws-us` or a URL); unset disables the admin API |
-| `PB_MC_AUDIENCE` | standard | no | | this service's public origin, as the gateway puts it in the JWT audience; set together with `PB_MC_ISSUER` |
+| `PB_MC_ISSUER` | standard | no | | Merchant Center API Gateway the admin JWTs come from (`gcp-eu`, `gcp-us`, `gcp-au`, `aws-eu`, `aws-us` or a URL); unset disables the admin API. The JWT audience is the origin of `CONNECT_DEPLOYED_URL`, the service's public URL, which Connect provides (set it yourself only for local development) |
 | `PB_CACHE_TTL_SECONDS` | standard | no | `15` | commercetools read cache; `0` disables; preview and draft reads are never cached |
 | `PB_FACET_ATTRIBUTES` | standard | no | | product attributes to offer as facets, in order; empty derives them from the product types |
 | `PB_FACET_LIMIT` | standard | no | `8` | maximum derived facets when `PB_FACET_ATTRIBUTES` is empty |

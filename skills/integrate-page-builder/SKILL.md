@@ -71,7 +71,7 @@ Each step: what and why, what to decide, when it is done, what bites.
 - commercetools access comes from a platform-generated API client with least-privilege scopes (custom-object write plus product, category and store read). Nobody creates a client by hand.
 - Product Search must be activated on the project; the service does not use the legacy search.
 - Connect does not strip the application's endpoint from the URL, so every route lives under that path prefix. The service URL clients use **includes** it.
-- The Merchant Center audience (the service's own public origin) is only known after the first deploy. Deploy, read the URL, set it, then **redeploy** (config change is a redeploy, never delete and recreate).
+- The Merchant Center JWT audience is the service's own public origin. The service takes it from the deployed URL Connect provides, so there is no audience to configure. Config changes are a redeploy, never delete and recreate.
 
 **Done when** the liveness route answers under the endpoint path, a render call without credentials is rejected, and the service log shows no start-up configuration problems.
 
@@ -89,11 +89,11 @@ Details: [references/platform.md](references/platform.md).
 - **Every client origin that will be previewed inside the editor** (production, staging, local development). The MC app's content-security policy must list them as frame sources; adding one later means a redeploy, so collect them in step 4 first.
 - Which teams get view and manage permissions.
 
-**Order of operations.** Register the custom application in Merchant Center with a placeholder URL, take its id, deploy via Connect with the id, entry path and region, read the deployed URL, then update the registration with it. The service must trust this app's gateway: its issuer matches the project region and its audience is the service origin (step 1).
+**Order of operations.** Register the custom application in Merchant Center with a placeholder URL, take its id, deploy via Connect with the id, entry path and region, read the deployed URL, then update the registration with it. The service must trust this app's gateway: its issuer (`PB_MC_ISSUER`) matches the project region; the audience is the service's own deployed URL (step 1).
 
 **Done when** the app appears in the menu for a permitted user, the Pages screen loads, and the service log shows authenticated gateway calls succeeding (not 401, not 403).
 
-**Watch out.** A forwarded call that is rejected as "wrong audience" almost always means the audience was set with a path or the wrong origin.
+**Watch out.** A forwarded call that is rejected as "wrong audience" almost always means the editor forwarded to a URL that is not the service's deployed URL.
 
 Details: [references/platform.md](references/platform.md).
 
