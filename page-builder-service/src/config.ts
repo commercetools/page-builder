@@ -241,9 +241,9 @@ function loadMc(env: Record<string, string | undefined>, problems: string[]): Mc
   if (!issuerRaw) return null;
   // Connect provides the service's public URL; locally a developer sets it. The Merchant Center
   // puts its origin in the JWT audience, so the origin is all that is used.
-  const deployedUrl = env.CONNECT_DEPLOYED_URL?.trim();
-  if (!deployedUrl) {
-    problems.push('PB_MC_ISSUER requires CONNECT_DEPLOYED_URL, the service\'s public URL (set by Connect; set it yourself for local development)');
+  const serviceUrl = env.CONNECT_SERVICE_URL?.trim();
+  if (!serviceUrl) {
+    problems.push('PB_MC_ISSUER requires CONNECT_SERVICE_URL, the service\'s public URL (set by Connect; set it yourself for local development)');
     return null;
   }
   const issuer = MC_ISSUERS[issuerRaw] ?? trimSlash(issuerRaw);
@@ -253,6 +253,6 @@ function loadMc(env: Record<string, string | undefined>, problems: string[]): Mc
     problems.push(`PB_MC_ISSUER: "${issuerRaw}" is neither a cloud identifier nor a URL`);
     return null;
   }
-  const audience = parseOrigin(deployedUrl, 'CONNECT_DEPLOYED_URL', problems);
+  const audience = parseOrigin(serviceUrl, 'CONNECT_SERVICE_URL', problems);
   return audience ? { issuer, audience } : null;
 }

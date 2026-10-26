@@ -43,7 +43,7 @@ deployAs:
           required: true
           default: 'https://mc.europe-west1.gcp.commercetools.com'
         - key: PB_MC_ISSUER
-          description: Merchant Center API Gateway the MC app's JWTs come from, as a cloud identifier (gcp-eu, gcp-us, gcp-au, aws-eu, aws-us) or a URL; the JWT audience is this service's own public origin, taken from the CONNECT_DEPLOYED_URL that Connect provides; unset disables the Merchant Center admin API
+          description: Merchant Center API Gateway the MC app's JWTs come from, as a cloud identifier (gcp-eu, gcp-us, gcp-au, aws-eu, aws-us) or a URL; the JWT audience is this service's own public origin, taken from the CONNECT_SERVICE_URL that Connect provides; unset disables the Merchant Center admin API
           required: false
         - key: PB_CACHE_TTL_SECONDS
           description: seconds to cache commercetools reads; preview and draft reads are never cached; 0 disables the cache
