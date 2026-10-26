@@ -1,0 +1,28 @@
+{
+  "name": "@commercetools-labs/page-builder-example-storefront",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Minimal Next.js storefront that renders pages from the page-builder service. The integration is app/[[...path]]/page.tsx, components/blocks/index.ts and page-builder.catalog.json.",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "typecheck": "tsc --noEmit",
+    "pb:validate": "node scripts/catalog.mjs validate",
+    "pb:push": "node scripts/catalog.mjs push",
+    "pb:publish": "node scripts/catalog.mjs publish"
+  },
+  "dependencies": {
+    "@commercetools-labs/page-builder": "file:../../packages/page-builder",
+    "next": "^16.4.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.9.2"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,428 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://commercetools.github.io/page-builder/catalog.schema.json",
+  "title": "Page Builder catalog",
+  "description": "Host-owned catalog pushed to the page-builder service: components, data sources, sections, theme.",
+  "type": "object",
+  "required": [
+    "components",
+    "data-sources",
+    "sections"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "components": {
+      "type": "object",
+      "required": [
+        "groups",
+        "components"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/componentGroup"
+          }
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        }
+      }
+    },
+    "data-sources": {
+      "type": "object",
+      "required": [
+        "groups",
+        "sources"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dataSourceGroup"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dataSource"
+          }
+        }
+      }
+    },
+    "sections": {
+      "type": "object",
+      "required": [
+        "sections"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/section"
+          }
+        }
+      }
+    },
+    "theme": {
+      "$ref": "#/$defs/theme"
+    }
+  },
+  "$defs": {
+    "localizedString": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "stringOrLocalized": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/localizedString"
+        }
+      ]
+    },
+    "pageTypeId": {
+      "enum": [
+        "all",
+        "static",
+        "category",
+        "pdp",
+        "dynamic"
+      ]
+    },
+    "fieldKind": {
+      "enum": [
+        "text",
+        "richtext",
+        "number",
+        "boolean",
+        "select",
+        "image",
+        "video",
+        "link",
+        "group",
+        "dataSource",
+        "product",
+        "productPicks",
+        "productPins",
+        "category",
+        "categoryPicks",
+        "categoryPins"
+      ]
+    },
+    "schemaField": {
+      "type": "object",
+      "required": [
+        "key",
+        "label",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "$ref": "#/$defs/stringOrLocalized"
+        },
+        "kind": {
+          "$ref": "#/$defs/fieldKind"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "localized": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "label"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "label": {
+                "$ref": "#/$defs/stringOrLocalized"
+              }
+            }
+          }
+        },
+        "dataSourceType": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/schemaField"
+          }
+        }
+      }
+    },
+    "componentGroup": {
+      "type": "object",
+      "required": [
+        "key",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "$ref": "#/$defs/stringOrLocalized"
+        }
+      }
+    },
+    "dataSourceGroup": {
+      "type": "object",
+      "required": [
+        "key",
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "fill": {
+      "description": "Route-driven data for a system component: the service resolves it from the request path.",
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "product-detail",
+            "category-listing"
+          ]
+        },
+        "slice": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "required": [
+        "type",
+        "name",
+        "icon",
+        "groupKey",
+        "schema"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "$ref": "#/$defs/localizedString"
+        },
+        "icon": {
+          "type": "string",
+          "minLength": 1
+        },
+        "groupKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pageTypes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pageTypeId"
+          }
+        },
+        "description": {
+          "$ref": "#/$defs/localizedString"
+        },
+        "schema": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/schemaField"
+          }
+        },
+        "inlineTextFields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fill": {
+          "$ref": "#/$defs/fill"
+        }
+      }
+    },
+    "resolver": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "product",
+            "product-list",
+            "products-by-category",
+            "product-picks",
+            "product-pins",
+            "category",
+            "category-list",
+            "category-picks",
+            "category-pins",
+            "category-tree",
+            "related-products"
+          ]
+        }
+      }
+    },
+    "dataSource": {
+      "type": "object",
+      "required": [
+        "type",
+        "name",
+        "icon",
+        "groupKey",
+        "schema",
+        "resolver"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "$ref": "#/$defs/localizedString"
+        },
+        "icon": {
+          "type": "string",
+          "minLength": 1
+        },
+        "groupKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "$ref": "#/$defs/localizedString"
+        },
+        "schema": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/schemaField"
+          }
+        },
+        "resolver": {
+          "$ref": "#/$defs/resolver"
+        }
+      }
+    },
+    "section": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "description",
+        "icon",
+        "pageTypes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "$ref": "#/$defs/localizedString"
+        },
+        "description": {
+          "$ref": "#/$defs/localizedString"
+        },
+        "icon": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pageTypes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pageTypeId"
+          }
+        }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sectionBackgrounds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "background"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "background": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "containerMaxWidth": {
+          "type": "string"
+        },
+        "containerPaddingX": {
+          "type": "string"
+        },
+        "gap": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "row": {
+              "type": "string"
+            },
+            "column": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

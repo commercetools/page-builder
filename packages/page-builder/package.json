@@ -1,0 +1,69 @@
+{
+  "name": "@commercetools-labs/page-builder",
+  "version": "1.0.0",
+  "description": "Storefront shim for the page-builder service: one <PageBuilder> mount that fetches the render tree, renders the grid with self-contained CSS, and ships the visual-editing bridge. No commercetools access in the host.",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./bridge": {
+      "types": "./dist/bridge.d.ts",
+      "default": "./dist/bridge.js"
+    },
+    "./catalog.schema.json": "./catalog.schema.json"
+  },
+  "files": [
+    "dist",
+    "catalog.schema.json"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "prepublishOnly": "npm run build",
+    "generate:api": "openapi-typescript ../../page-builder-service/openapi.yaml -o src/generated/api.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "commercetools",
+    "page-builder",
+    "storefront",
+    "nextjs"
+  ],
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.6",
+    "@types/node": "^20.11.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "jsdom": "^29.1.1",
+    "openapi-typescript": "^7.13.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.2.8",
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.11",
+    "yaml": "^2.8.0"
+  },
+  "dependencies": {
+    "xss": "^1.0.15"
+  }
+}

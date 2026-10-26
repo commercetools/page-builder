@@ -1,0 +1,15 @@
+query FetchCategories($locale: Locale!, $limit: Int!) {
+  categories(sort: ["orderHint asc"], limit: $limit) {
+    total
+    results {
+      id
+      key
+      name(locale: $locale)
+      slug(locale: $locale)
+      childCount
+      parent {
+        id
+      }
+    }
+  }
+}

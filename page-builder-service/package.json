@@ -1,0 +1,43 @@
+{
+  "name": "@commercetools-labs/page-builder-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Per-project page-builder service: render API, catalog ingest, admin API.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
+    "start": "NODE_ENV=production node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node scripts/test.mjs",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "generate:api": "openapi-typescript openapi.yaml -o src/generated/api.ts",
+    "lint:api": "redocly lint openapi.yaml",
+    "dev:fake": "tsx src/testing/dev-server.ts",
+    "latency": "node scripts/latency.mjs",
+    "sync:schema": "cp ../packages/page-builder/catalog.schema.json src/domain/catalog.schema.json"
+  },
+  "dependencies": {
+    "@commercetools/platform-sdk": "^9.7.0",
+    "@commercetools/ts-client": "^5.1.1",
+    "ajv": "^8.20.0",
+    "fastify": "^5.0.0",
+    "jose": "^6.2.13"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^2.67.1",
+    "@types/node": "^20.11.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "openapi-typescript": "^7.13.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.11",
+    "yaml": "^2.9.1"
+  }
+}

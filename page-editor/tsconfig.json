@@ -1,0 +1,18 @@
+{
+  "extends": "@commercetools-frontend/application-config/tsconfig-mc-app.json",
+  "compilerOptions": {
+    "typeRoots": ["@types", "@types-extensions", "node_modules/@types"],
+    // Library declarations in node_modules carry pre-existing errors (chakra,
+    // application-shell, react-use). Skipping them keeps `typecheck` focused on
+    // this project's own sources.
+    "skipLibCheck": true,
+    // Allow tsc to resolve dependencies of `@types` packages in the way pnpm sets up the `node_modules`.
+    "preserveSymlinks": false,
+    "paths": {
+      "@commercetools/nimbus-tokens": [
+        "./node_modules/@commercetools/nimbus-tokens/dist/commercetools-nimbus-tokens.cjs.d.ts"
+      ]
+    }
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,230 @@
+{
+  "page": {
+    "HEAD": [
+      {
+        "id": "head-1779302316938",
+        "kind": "layout",
+        "width": "1/1",
+        "name": {
+          "en-US": "New 1/1 layout"
+        },
+        "visibility": {
+          "mobile": true,
+          "tablet": true,
+          "desktop": true
+        },
+        "children": []
+      }
+    ],
+    "MAIN": [
+      {
+        "id": "main-1779368429838",
+        "kind": "layout",
+        "width": "1/1",
+        "name": {
+          "en-US": "Category Header",
+          "en-GB": "",
+          "de-DE": "",
+          "es-ES": "",
+          "fr-FR": "",
+          "it-IT": "",
+          "pt-PT": "",
+          "nl-NL": ""
+        },
+        "visibility": {
+          "mobile": true,
+          "tablet": true,
+          "desktop": true
+        },
+        "children": [
+          {
+            "id": "main-1779368429838-comp-1779368445835",
+            "type": "category/breadcrumb",
+            "name": {
+              "en-US": "Breadcrumb",
+              "en-GB": "Breadcrumb",
+              "de-DE": "Breadcrumb",
+              "fr-FR": "Fil d'Ariane",
+              "nl-NL": "Broodkruimel",
+              "es-ES": "Ruta de navegación",
+              "pt-PT": "Breadcrumb",
+              "it-IT": "Breadcrumb"
+            },
+            "visibility": {
+              "mobile": true,
+              "tablet": true,
+              "desktop": true
+            },
+            "settings": {
+              "category": "ds_mpfi40zc_dg5p"
+            }
+          },
+          {
+            "id": "main-1779368429838-comp-1779368568291",
+            "type": "category/title",
+            "name": {
+              "en-US": "Category title",
+              "en-GB": "Category title",
+              "de-DE": "Kategorietitel",
+              "fr-FR": "Titre de catégorie",
+              "nl-NL": "Categorietitel",
+              "es-ES": "Título de categoría",
+              "pt-PT": "Título de categoria",
+              "it-IT": "Titolo categoria"
+            },
+            "visibility": {
+              "mobile": true,
+              "tablet": true,
+              "desktop": true
+            },
+            "settings": {
+              "category": "ds_mpfi40zc_dg5p"
+            }
+          }
+        ]
+      },
+      {
+        "id": "main-1779368675523",
+        "kind": "layout",
+        "width": "1/4",
+        "name": {
+          "en-US": "New 1/4 layout"
+        },
+        "visibility": {
+          "mobile": true,
+          "tablet": true,
+          "desktop": true
+        },
+        "children": [
+          {
+            "id": "main-1779368675523-comp-1779430550807",
+            "type": "category/facets",
+            "name": {
+              "en-US": "Facets",
+              "en-GB": "Facets",
+              "de-DE": "Facetten",
+              "fr-FR": "Facettes",
+              "nl-NL": "Facetten",
+              "es-ES": "Facetas",
+              "pt-PT": "Facetas",
+              "it-IT": "Facette"
+            },
+            "visibility": {
+              "mobile": true,
+              "tablet": true,
+              "desktop": true
+            },
+            "settings": {
+              "products": "ds_mpfre6ms_ykt0"
+            }
+          },
+          {
+            "id": "main-1779368675523-comp-1779368699122",
+            "type": "category/subcategories",
+            "name": {
+              "en-US": "Subcategories",
+              "en-GB": "Subcategories",
+              "de-DE": "Unterkategorien",
+              "fr-FR": "Sous-catégories",
+              "nl-NL": "Subcategorieën",
+              "es-ES": "Subcategorías",
+              "pt-PT": "Subcategorias",
+              "it-IT": "Sottocategorie"
+            },
+            "visibility": {
+              "mobile": true,
+              "tablet": true,
+              "desktop": true
+            },
+            "settings": {
+              "category": "ds_mpfi40zc_dg5p"
+            }
+          }
+        ]
+      },
+      {
+        "id": "main-1779383525310",
+        "kind": "layout",
+        "width": "3/4",
+        "name": {
+          "en-US": "New 3/4 layout"
+        },
+        "visibility": {
+          "mobile": true,
+          "tablet": true,
+          "desktop": true
+        },
+        "children": [
+          {
+            "id": "main-1779383525310-comp-1779431821311",
+            "type": "category/toolbar",
+            "name": {
+              "en-US": "Toolbar",
+              "en-GB": "Toolbar",
+              "de-DE": "Werkzeugleiste",
+              "fr-FR": "Barre d'outils",
+              "nl-NL": "Werkbalk",
+              "es-ES": "Barra de herramientas",
+              "pt-PT": "Barra de ferramentas",
+              "it-IT": "Barra degli strumenti"
+            },
+            "visibility": {
+              "mobile": true,
+              "tablet": true,
+              "desktop": true
+            },
+            "settings": {
+              "products": "ds_mpfre6ms_ykt0"
+            }
+          },
+          {
+            "id": "main-1779383525310-comp-1779383579822",
+            "type": "category/products",
+            "name": {
+              "en-US": "Products",
+              "en-GB": "Products",
+              "de-DE": "Produkte",
+              "fr-FR": "Produits",
+              "nl-NL": "Producten",
+              "es-ES": "Productos",
+              "pt-PT": "Produtos",
+              "it-IT": "Prodotti"
+            },
+            "visibility": {
+              "mobile": true,
+              "tablet": true,
+              "desktop": true
+            },
+            "settings": {
+              "category": "ds_mpfi40zc_dg5p",
+              "products": "ds_mpfre6ms_ykt0"
+            }
+          },
+          {
+            "id": "main-1779383525310-comp-1779431840312",
+            "type": "category/pagination",
+            "name": {
+              "en-US": "Pagination",
+              "en-GB": "Pagination",
+              "de-DE": "Seitennavigation",
+              "fr-FR": "Pagination",
+              "nl-NL": "Paginering",
+              "es-ES": "Paginación",
+              "pt-PT": "Paginação",
+              "it-IT": "Paginazione"
+            },
+            "visibility": {
+              "mobile": true,
+              "tablet": true,
+              "desktop": true
+            },
+            "settings": {
+              "products": "ds_mpfre6ms_ykt0"
+            }
+          }
+        ]
+      }
+    ],
+    "FOOTER": []
+  }
+}

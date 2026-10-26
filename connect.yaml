@@ -1,0 +1,89 @@
+deployAs:
+  - name: page-editor
+    applicationType: merchant-center-custom-application
+    configuration:
+      standardConfiguration:
+        - key: CUSTOM_APPLICATION_ID
+          description: The Custom Application ID
+          required: true
+        - key: ENTRY_POINT_URI_PATH
+          description: The Application entry point URI path
+          required: true
+          default: 'page-editor'
+        - key: INITIAL_PROJECT_KEY
+          description: development project key
+          required: true
+        - key: CLOUD_IDENTIFIER
+          description: one of the following gcp-us, gcp-eu, aws-us, aws-eu
+          required: true
+          default: 'gcp-eu'
+        - key: IMAGE_PICKER_BASE_URL
+          description: contentools media service base URL including the /service path prefix; empty disables the image picker
+          required: false
+        - key: IMAGE_PICKER_BUSINESS_UNIT_KEY
+          description: business unit key namespacing media storage
+          required: false
+          default: 'default'
+        - key: PAGE_BUILDER_SERVICE_URL
+          description: page-builder service URL including its /service path; empty keeps the app on the Merchant Center GraphQL gateway
+          required: false
+        - key: PAGE_BUILDER_SERVICE_HOOKS
+          description: all, or a comma list of hook families (pages, page-components, comments, workflows, page-workflow, preview-settings, data-sources, sections, components, instances, reset) that use the service; empty means none
+          required: false
+  - name: page-builder-service
+    applicationType: service
+    endpoint: /service
+    configuration:
+      standardConfiguration:
+        - key: PB_BASE_PATH
+          description: URL prefix the routes are mounted under; must equal the Connect endpoint
+          required: false
+          default: '/service'
+        - key: PB_RENDER_ORIGINS
+          description: comma-separated storefront server origins allowed to call the render API
+          required: true
+        - key: PB_EDITOR_ORIGINS
+          description: comma-separated Merchant Center origins allowed to embed and drive the visual-editing bridge
+          required: true
+          default: 'https://mc.europe-west1.gcp.commercetools.com'
+        - key: PB_MC_ISSUER
+          description: Merchant Center API Gateway the MC app's JWTs come from, as a cloud identifier (gcp-eu, gcp-us, gcp-au, aws-eu, aws-us) or a URL; unset disables the Merchant Center admin API
+          required: false
+        - key: PB_MC_AUDIENCE
+          description: this service's public origin (https://host, no path) as the Merchant Center puts it in the JWT audience; the MC app forwards with the forward-url-origin audience policy
+          required: false
+        - key: PB_CACHE_TTL_SECONDS
+          description: seconds to cache commercetools reads; preview and draft reads are never cached; 0 disables the cache
+          required: false
+          default: '15'
+        - key: PB_FACET_ATTRIBUTES
+          description: comma-separated product attribute names to offer as facets, in order; empty derives them from the searchable enum/text/boolean attributes of the product types
+          required: false
+        - key: PB_FACET_LIMIT
+          description: maximum number of derived facets when PB_FACET_ATTRIBUTES is empty
+          required: false
+          default: '8'
+        - key: LOG_LEVEL
+          description: one of debug, info, warn, error
+          required: false
+          default: 'info'
+      securedConfiguration:
+        - key: PB_RENDER_KEY
+          description: key the storefront shim presents on render calls
+          required: true
+        - key: PB_PREVIEW_TOKEN
+          description: token that unlocks draft/preview and edit mode; leave unset to disable previews
+          required: false
+        - key: PB_ADMIN_SECRET
+          description: bearer secret for catalog validate, push and publish from CI
+          required: true
+inheritAs:
+  # Connect generates the API client at install time with exactly these scopes and injects
+  # CTP_PROJECT_KEY, CTP_CLIENT_ID, CTP_CLIENT_SECRET, CTP_SCOPE, CTP_API_URL and CTP_AUTH_URL
+  # into the page-builder-service; no credentials are configured by hand.
+  apiClient:
+    scopes:
+      - manage_key_value_documents # page, catalog and settings custom objects (read + write)
+      - view_products # product search, projections, product types
+      - view_categories
+      - view_stores

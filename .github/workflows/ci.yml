@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, builder]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  service:
+    name: page-builder-service
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: page-builder-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: page-builder-service/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint:api
+      - run: npm run test:coverage
+      - run: npm run build
+
+  shim:
+    name: "@commercetools-labs/page-builder (shim)"
+    runs-on: ubuntu-latest
+    env:
+      # npm 10 crashes on this package's peer graph without it.
+      NPM_CONFIG_LEGACY_PEER_DEPS: 'true'
+    defaults:
+      run:
+        working-directory: packages/page-builder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: packages/page-builder/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:coverage
+      - run: npm run build
+
+  page-editor:
+    name: page-editor (${{ matrix.transport }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        transport: [graphql, service]
+    defaults:
+      run:
+        working-directory: page-editor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: page-editor/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - run: yarn typecheck
+      - if: matrix.transport == 'graphql'
+        run: yarn test:coverage
+      - if: matrix.transport == 'service'
+        run: yarn test:service
+
+  example:
+    name: examples/nextjs-storefront
+    runs-on: ubuntu-latest
+    needs: [shim]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The example links the shim from the workspace, so build it first.
+      - run: npm ci
+        working-directory: packages/page-builder
+      - run: npm run build
+        working-directory: packages/page-builder
+      - run: npm ci
+        working-directory: examples/nextjs-storefront
+      - run: npm run typecheck
+        working-directory: examples/nextjs-storefront
+      - run: npm run build
+        working-directory: examples/nextjs-storefront
+        env:
+          PB_SERVICE_URL: http://127.0.0.1:8080/service
+      # The example's catalog must stay valid against the service it targets: validate it against
+      # the local fake service (no secrets, nothing is written anywhere real).
+      - run: npm ci
+        working-directory: page-builder-service
+      - name: Validate the example catalog against the service
+        working-directory: examples/nextjs-storefront
+        env:
+          PB_SERVICE_URL: http://127.0.0.1:8080/service
+          PB_ADMIN_SECRET: dev-admin
+        run: |
+          (cd ../../page-builder-service && npm run dev:fake > /tmp/fake-service.log 2>&1 &)
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8080/service/healthz && break; sleep 1; done
+          npm run pb:validate

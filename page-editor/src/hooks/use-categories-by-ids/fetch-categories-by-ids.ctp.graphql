@@ -1,0 +1,13 @@
+query FetchCategoriesByIds($where: String!, $locale: Locale!, $limit: Int!) {
+  categories(where: $where, limit: $limit) {
+    results {
+      id
+      key
+      name(locale: $locale)
+      ancestors {
+        id
+        name(locale: $locale)
+      }
+    }
+  }
+}

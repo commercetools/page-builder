@@ -1,0 +1,18 @@
+query CategorySearch(
+  $fulltext: LocalizedText
+  $limit: Int!
+  $offset: Int!
+  $locale: Locale
+) {
+  categorySearch(fulltext: $fulltext, limit: $limit, offset: $offset) {
+    results {
+      id
+      key
+      name(locale: $locale)
+      ancestors {
+        id
+        name(locale: $locale)
+      }
+    }
+  }
+}

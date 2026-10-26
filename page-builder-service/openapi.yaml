@@ -1,0 +1,718 @@
+openapi: 3.1.0
+info:
+  title: Page Builder Service
+  version: 1.0.0
+  license:
+    name: MIT
+    identifier: MIT
+  description: |
+    Per-project page-builder service (commercetools Connect). Normative contract for the
+    storefront shim, CI catalog push, and (later) the Merchant Center app.
+
+    Public URL: `{connect-url}/service/v1/...` — Connect does not strip the app endpoint, so
+    the service mounts all routes under `PB_BASE_PATH` (`/service` when deployed).
+
+    Canonical shapes are described in `docs/sdd/canonical-shapes.md`; an incompatible change
+    to any schema here increments `WireVersion`.
+servers:
+  - url: /service
+    description: Connect deployment (endpoint `/service`)
+  - url: /
+    description: Local development
+
+tags:
+  - name: render
+    description: Storefront render surface (authenticated by render key + origin allowlist)
+  - name: admin
+    description: Merchant Center object gateway (authenticated by the forwarded Merchant Center JWT)
+  - name: catalog
+    description: Host catalog ingest (authenticated by the admin secret)
+
+paths:
+  /v1/render:
+    get:
+      tags: [render]
+      operationId: render
+      summary: Render the page for a request path
+      description: |
+        Resolves `path` to a page via the page tree, reads the published snapshot (or the draft
+        head under a valid preview token), localizes, packs the grid, and resolves data sources.
+        Returns 404 when no renderable page exists for the path.
+      security:
+        - renderKey: []
+      parameters:
+        - $ref: '#/components/parameters/WireVersionHeader'
+        - $ref: '#/components/parameters/HostOriginHeader'
+        - name: path
+          in: query
+          required: true
+          description: The storefront URL path, e.g. `/women/dresses`. Locale prefixes are the host's concern; pass the path as the page tree stores it.
+          schema: { type: string, minLength: 1 }
+        - name: locale
+          in: query
+          required: true
+          schema: { type: string, examples: [en-US] }
+        - name: store
+          in: query
+          schema: { type: string, description: commercetools store key }
+        - name: currency
+          in: query
+          required: true
+          schema: { type: string, pattern: '^[A-Z]{3}$' }
+        - name: country
+          in: query
+          required: true
+          schema: { type: string, pattern: '^[A-Z]{2}$' }
+        - name: search
+          in: query
+          description: |
+            The host page's raw query string, URL-encoded as a single value (without the leading
+            `?`). Carries `pb_preview`, `pb_edit`, `pb_page_id`, facet filters (`facet.<name>`),
+            `sort` and `offset` exactly as the shopper's browser sent them.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Render tree
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RenderResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '426': { $ref: '#/components/responses/UpgradeRequired' }
+
+  /v1/catalog:
+    get:
+      tags: [catalog]
+      operationId: getCatalog
+      summary: Read the catalog
+      parameters:
+        - name: state
+          in: query
+          schema: { type: string, enum: [draft, published], default: published }
+      security: [{ adminSecret: [] }]
+      responses:
+        '200':
+          description: The catalog at the requested state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogDocument' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [catalog]
+      operationId: pushCatalog
+      summary: Validate and write the catalog as a draft
+      description: |
+        Validates, then writes the draft idempotently: when the payload's source hash equals the
+        stored draft head the call is a no-op. Nothing is written when validation fails.
+      security: [{ adminSecret: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Catalog' }
+      responses:
+        '200':
+          description: Draft written or unchanged
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogPushResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/CatalogInvalid' }
+
+  /v1/catalog/validate:
+    post:
+      tags: [catalog]
+      operationId: validateCatalog
+      summary: Validate a catalog without writing
+      security: [{ adminSecret: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Catalog' }
+      responses:
+        '200':
+          description: Valid; any warnings are listed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ValidationReport' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/CatalogInvalid' }
+
+  /v1/catalog/publish:
+    post:
+      tags: [catalog]
+      operationId: publishCatalog
+      summary: Promote the draft head to published
+      security: [{ adminSecret: [] }]
+      responses:
+        '200':
+          description: Published
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogPublishResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/admin/objects/{container}:
+    get:
+      tags: [admin]
+      operationId: listObjects
+      summary: List objects in a page-builder container
+      description: One uncached page. `where` is a commercetools query predicate (for example `id in ("a", "b")`).
+      security: [{ mcToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Container'
+        - name: where
+          in: query
+          schema: { type: string, maxLength: 8192 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 500, default: 20 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200':
+          description: A page of objects
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ObjectPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ContainerNotAllowed' }
+
+  /v1/admin/objects/{container}/{key}:
+    get:
+      tags: [admin]
+      operationId: getObject
+      summary: Read one object (never cached)
+      security: [{ mcToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Container'
+        - $ref: '#/components/parameters/ObjectKey'
+      responses:
+        '200':
+          description: The object
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StoredObject' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ContainerNotAllowed' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [admin]
+      operationId: putObject
+      summary: Create or update one object
+      description: |
+        With `version`, a stale write is rejected with 409 so the caller can re-read and retry. The
+        host catalog (`page-editor/components`, `data-sources`, `sections`, `theme`) is read-only here and
+        changes only through catalog ingest. The acting user is recorded in the audit log.
+      security: [{ mcToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Container'
+        - $ref: '#/components/parameters/ObjectKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value]
+              properties:
+                value: {}
+                version: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: The written object
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StoredObject' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ContainerNotAllowed' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [admin]
+      operationId: deleteObject
+      summary: Delete one object
+      security: [{ mcToken: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Container'
+        - $ref: '#/components/parameters/ObjectKey'
+        - name: version
+          in: query
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: The deleted object
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StoredObject' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/ContainerNotAllowed' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+components:
+  securitySchemes:
+    renderKey:
+      type: apiKey
+      in: header
+      name: X-PB-Render-Key
+      description: Render key; additionally the caller's `Origin` must be on the allowlist. Both are required in production and skipped when unset in local development.
+    mcToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        The exchange JWT the Merchant Center API Gateway adds when the MC app calls the service through
+        `/proxy/forward-to` with the `forward-url-origin` audience policy. Verified against the gateway's JWKS;
+        the project-key claim must equal the service's project.
+    adminSecret:
+      type: http
+      scheme: bearer
+      description: Catalog admin secret (`PB_ADMIN_SECRET`).
+
+  parameters:
+    Container:
+      name: container
+      in: path
+      required: true
+      description: One of `page-editor`, `page-editor-draft`, `page-editor-published`, `page-editor-components`.
+      schema: { type: string }
+    ObjectKey:
+      name: key
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[A-Za-z0-9_-]{1,256}$' }
+    WireVersionHeader:
+      name: X-PB-Wire-Version
+      in: header
+      required: true
+      description: The wire version the client implements. Incompatible versions are rejected with 426.
+      schema: { $ref: '#/components/schemas/WireVersion' }
+
+    HostOriginHeader:
+      name: X-PB-Origin
+      in: header
+      description: |
+        The storefront's public origin. Server-side fetches carry no browser `Origin`, so the shim
+        states it here; a browser caller's own `Origin` header takes precedence. Checked against
+        the origin allowlist (required in production, skipped when unset in development).
+      schema: { type: string, examples: ['https://shop.example.com'] }
+
+  responses:
+    BadRequest:
+      description: Malformed request
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Origin not on the allowlist
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: No such page or catalog
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    UpgradeRequired:
+      description: The client's wire version is not supported; the body lists the supported versions
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/UnsupportedWireVersion' }
+    ContainerNotAllowed:
+      description: The container is not managed by the page-builder, or the object is the host-owned catalog
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: The object was modified since the supplied version
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    CatalogInvalid:
+      description: The catalog failed validation; every violation is listed and nothing was written
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ValidationReport' }
+
+  schemas:
+    WireVersion:
+      type: integer
+      const: 1
+      description: Incremented on any incompatible change to a schema in this document.
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: {}
+
+    UnsupportedWireVersion:
+      type: object
+      required: [error, supported]
+      properties:
+        error: { $ref: '#/components/schemas/Error/properties/error' }
+        supported:
+          type: array
+          items: { $ref: '#/components/schemas/WireVersion' }
+
+    # ── Render tree ─────────────────────────────────────────────────────────────
+    RenderResult:
+      type: object
+      required: [wireVersion, preview, editMode, sections]
+      properties:
+        wireVersion: { $ref: '#/components/schemas/WireVersion' }
+        pageId: { type: string, description: The page that was rendered }
+        preview: { type: boolean, description: True only for a valid preview token }
+        editMode: { type: boolean, description: True only for a valid preview that also asked for edit mode }
+        allowedOrigins:
+          type: array
+          description: Merchant Center origins the bridge may talk to. Present only when editMode is true.
+          items: { type: string }
+        theme: { $ref: '#/components/schemas/Theme' }
+        manifest:
+          type: array
+          description: Editable text fields per component type, for the bridge handshake. Present only when editMode is true.
+          items:
+            type: object
+            required: [type, inlineTextFields]
+            properties:
+              type: { type: string }
+              inlineTextFields:
+                type: array
+                items: { type: string }
+        sections:
+          type: array
+          items: { $ref: '#/components/schemas/LayoutSection' }
+
+    LayoutSection:
+      type: object
+      required: [sectionId, layoutElements]
+      properties:
+        sectionId: { type: string }
+        configuration:
+          type: object
+          properties:
+            background: { type: string, description: Key into `theme.sectionBackgrounds` }
+        layoutElements:
+          type: array
+          items: { $ref: '#/components/schemas/LayoutElement' }
+
+    ResponsiveNumber:
+      oneOf:
+        - type: integer
+          minimum: 1
+          maximum: 12
+        - type: object
+          properties:
+            mobile: { type: integer, minimum: 1, maximum: 12 }
+            tablet: { type: integer, minimum: 1, maximum: 12 }
+            desktop: { type: integer, minimum: 1, maximum: 12 }
+
+    LayoutElement:
+      type: object
+      required: [items]
+      properties:
+        layoutElementId: { type: string }
+        configuration:
+          type: object
+          properties:
+            size: { $ref: '#/components/schemas/ResponsiveNumber' }
+            mobile: { type: boolean }
+            tablet: { type: boolean }
+            desktop: { type: boolean }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/LayoutItem' }
+
+    LayoutItem:
+      type: object
+      required: [layoutItemType, configuration]
+      properties:
+        layoutItemId: { type: string }
+        layoutItemType: { type: string }
+        configuration:
+          type: object
+          description: Localized settings merged with resolved data (canonical shapes). Visibility flags are `mobile`/`tablet`/`desktop`.
+          properties:
+            name: { type: string }
+            mobile: { type: boolean }
+            tablet: { type: boolean }
+            desktop: { type: boolean }
+          additionalProperties: true
+
+    Theme:
+      type: object
+      properties:
+        sectionBackgrounds:
+          type: object
+          additionalProperties:
+            type: object
+            required: [background]
+            properties:
+              background: { type: string }
+              color: { type: string }
+        containerMaxWidth: { type: string }
+        containerPaddingX: { type: string }
+        gap:
+          type: object
+          properties:
+            row: { type: string }
+            column: { type: string }
+
+    # ── Canonical resolved-data shapes (docs/sdd/canonical-shapes.md §2) ────────
+    Money:
+      type: object
+      required: [centAmount, currencyCode]
+      properties:
+        centAmount: { type: integer }
+        currencyCode: { type: string }
+    Price:
+      allOf:
+        - $ref: '#/components/schemas/Money'
+        - type: object
+          properties:
+            discounted:
+              allOf:
+                - $ref: '#/components/schemas/Money'
+                - type: object
+                  properties:
+                    discountName: { type: string }
+            recurrencePolicyId: { type: string }
+    Image:
+      type: object
+      required: [url]
+      properties:
+        url: { type: string }
+        alt: { type: string }
+    RatingSummary:
+      type: object
+      required: [average, count, distribution]
+      properties:
+        average: { type: number }
+        count: { type: integer }
+        distribution:
+          type: object
+          required: ['1', '2', '3', '4', '5']
+          additionalProperties: false
+          properties:
+            '1': { type: integer }
+            '2': { type: integer }
+            '3': { type: integer }
+            '4': { type: integer }
+            '5': { type: integer }
+    ProductCard:
+      type: object
+      required: [id, sku, name, slug]
+      properties:
+        id: { type: string }
+        key: { type: string }
+        sku: { type: string }
+        name: { type: string }
+        slug: { type: string }
+        image: { $ref: '#/components/schemas/Image' }
+        price: { $ref: '#/components/schemas/Price' }
+        inStock: { type: boolean }
+        rating:
+          oneOf:
+            - $ref: '#/components/schemas/RatingSummary'
+            - type: 'null'
+    Variant:
+      type: object
+      required: [sku, images, attributes]
+      properties:
+        sku: { type: string }
+        images:
+          type: array
+          items: { $ref: '#/components/schemas/Image' }
+        price: { $ref: '#/components/schemas/Price' }
+        attributes:
+          type: array
+          items:
+            type: object
+            required: [name, value]
+            properties:
+              name: { type: string }
+              label: { type: string }
+              value:
+                type: [string, number, boolean, 'null']
+        inStock: { type: boolean }
+    BreadcrumbItem:
+      type: object
+      required: [name, slug]
+      properties:
+        name: { type: string }
+        slug: { type: string }
+    Breadcrumb:
+      type: array
+      items: { $ref: '#/components/schemas/BreadcrumbItem' }
+    ProductDetail:
+      allOf:
+        - $ref: '#/components/schemas/ProductCard'
+        - type: object
+          required: [variants, categoryIds, breadcrumb, recurrencePolicyIds]
+          properties:
+            description: { type: string }
+            variants:
+              type: array
+              description: Index 0 is the master variant
+              items: { $ref: '#/components/schemas/Variant' }
+            categoryIds:
+              type: array
+              items: { type: string }
+            breadcrumb: { $ref: '#/components/schemas/Breadcrumb' }
+            recurrencePolicyIds:
+              type: array
+              items: { type: string }
+            meta:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+                keywords: { type: string }
+    CategoryNode:
+      type: object
+      required: [id, slug, name]
+      properties:
+        id: { type: string }
+        key: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        description: { type: string }
+        image: { $ref: '#/components/schemas/Image' }
+        parentId: { type: string }
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/CategoryNode' }
+    FacetBucket:
+      type: object
+      required: [key, count]
+      properties:
+        key: { type: string }
+        label: { type: string }
+        count: { type: integer }
+    Facet:
+      type: object
+      required: [name, buckets]
+      properties:
+        name: { type: string }
+        label: { type: string }
+        buckets:
+          type: array
+          items: { $ref: '#/components/schemas/FacetBucket' }
+    SortOption:
+      type: object
+      required: [key, field, order]
+      properties:
+        key:
+          type: string
+          enum: [relevance, newest, price-asc, price-desc, name]
+          description: The value of the `sort` search parameter that selects this option.
+        field: { type: string }
+        order: { type: string, enum: [asc, desc] }
+        label: { type: string }
+    SearchResult:
+      type: object
+      required: [products, total, offset, limit, facets, sort, availableSorts]
+      properties:
+        products:
+          type: array
+          items: { $ref: '#/components/schemas/ProductCard' }
+        total: { type: integer }
+        offset: { type: integer }
+        limit: { type: integer }
+        facets:
+          type: array
+          items: { $ref: '#/components/schemas/Facet' }
+        sort: { $ref: '#/components/schemas/SortOption' }
+        availableSorts:
+          type: array
+          items: { $ref: '#/components/schemas/SortOption' }
+
+    StoredObject:
+      type: object
+      required: [id, key, container, version, value]
+      properties:
+        id: { type: string }
+        key: { type: string }
+        container: { type: string }
+        version: { type: integer }
+        value: {}
+        lastModifiedAt: { type: string, format: date-time }
+
+    ObjectPage:
+      type: object
+      required: [results, total, offset, limit, count]
+      properties:
+        results:
+          type: array
+          items: { $ref: '#/components/schemas/StoredObject' }
+        total: { type: integer }
+        offset: { type: integer }
+        limit: { type: integer }
+        count: { type: integer }
+
+    # ── Catalog ─────────────────────────────────────────────────────────────────
+    Catalog:
+      description: The host-owned catalog JSON. Validated structurally by `catalog.schema.json` and referentially by the service.
+      $ref: './src/domain/catalog.schema.json'
+
+    CatalogDocument:
+      type: object
+      required: [state, appVersion, catalog]
+      properties:
+        state: { type: string, enum: [draft, published] }
+        appVersion: { type: integer }
+        savedAt: { type: string, format: date-time }
+        publishedAt: { type: [string, 'null'], format: date-time }
+        sourceHash: { type: string }
+        catalog: { $ref: '#/components/schemas/Catalog' }
+
+    ValidationReport:
+      type: object
+      required: [errors, warnings]
+      properties:
+        errors:
+          type: array
+          items: { type: string }
+        warnings:
+          type: array
+          items: { type: string }
+
+    CatalogPushResult:
+      type: object
+      required: [status, sourceHash, warnings]
+      properties:
+        status:
+          type: string
+          enum: [written, unchanged]
+        appVersion: { type: integer }
+        sourceHash: { type: string }
+        warnings:
+          type: array
+          items: { type: string }
+
+    CatalogPublishResult:
+      type: object
+      required: [appVersion, publishedAt]
+      properties:
+        appVersion: { type: integer }
+        publishedAt: { type: string, format: date-time }
