@@ -6,7 +6,7 @@ thing that talks to commercetools custom objects on the page-builder's behalf.
 
 ```
  storefront (Next.js)            Merchant Center app               host CI
-   <PageBuilder/> shim              page-editor                  catalog.mjs
+   <PageBuilder/> shim              page-editor                  catalog script
         │  GET /v1/render               │  /proxy/forward-to           │  POST /v1/catalog
         │  render key + origin          │  MC-user JWT                 │  admin secret
         ▼                               ▼                              ▼

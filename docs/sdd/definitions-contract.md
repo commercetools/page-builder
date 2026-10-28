@@ -199,7 +199,7 @@ Draft history is capped at `MAX_VERSIONS = 50` (oldest dropped).
   is the go-live gate. `GET /v1/catalog?state=draft|published` reads either back.
 - **Ordering.** Deploy the host first, then push, then publish, so the published catalog never
   advertises a `type` the live host cannot render. CI: validate on pull requests; push + publish after
-  deploy (`examples/nextjs-storefront/scripts/catalog.mjs`). Authentication is the service's
+  deploy (`skills/integrate-page-builder/scripts/catalog.mjs`). Authentication is the service's
   `PB_ADMIN_SECRET` as a bearer token.
 
 ## 5. Referential rules (checked by the service)

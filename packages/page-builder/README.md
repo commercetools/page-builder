@@ -44,7 +44,7 @@ commercetools credentials, no resolvers and no Tailwind setup**.
    against `catalog.schema.json` (`"$schema": "./node_modules/@commercetools-labs/page-builder/catalog.schema.json"`).
 
 4. **Push it from CI.** Validate on pull requests; push and publish after the deploy
-   (see [`examples/nextjs-storefront/scripts/catalog.mjs`](../../examples/nextjs-storefront/scripts/catalog.mjs),
+   (see [`skills/integrate-page-builder/scripts/catalog.mjs`](../../skills/integrate-page-builder/scripts/catalog.mjs),
    which has no dependencies).
 
 5. **Configure.**
@@ -58,7 +58,7 @@ commercetools credentials, no resolvers and no Tailwind setup**.
 
    All four can also be passed as props.
 
-A working host is in [`examples/nextjs-storefront`](../../examples/nextjs-storefront).
+The step-by-step guide for integrating a client is [`skills/integrate-page-builder`](../../skills/integrate-page-builder/SKILL.md).
 
 ## Behaviour
 

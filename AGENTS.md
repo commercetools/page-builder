@@ -44,7 +44,6 @@ so every command below is run from that unit's directory.
 | `page-editor/` | Jest (`jest-preset-mc-app`) | `yarn test`, and `yarn test:service` (see below) | `yarn test:coverage` |
 | `page-builder-service/` | Vitest | `npm test` | `npm run test:coverage` |
 | `packages/page-builder/` (the shim) | Vitest | `npm test` | `npm run test:coverage` |
-| `examples/nextjs-storefront/` | — (typechecked and built) | `npm run typecheck && npm run build` | — |
 
 `.github/workflows/ci.yml` runs typecheck + tests (+ coverage) for each as a matrix on every pull
 request and on pushes to `main` and `builder`. Typed clients are generated from

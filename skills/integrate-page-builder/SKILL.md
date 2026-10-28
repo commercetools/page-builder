@@ -16,7 +16,7 @@ The page builder has three parts. Only the third is yours to build per client.
 
 The client holds no commercetools credentials, no data resolvers and no storage logic. It draws what the service returns.
 
-> **Status: v0.1 drafted from the reference host.** Steps are validated against the reference web storefront, not yet against a real project. Where a real integration teaches something, record it under [Integration log](#integration-log) and fix the step.
+> **Status: v0.1, drafted from the platform's own contracts and a read-only look at one real storefront.** It has not yet been walked end to end on a real project. Where a real integration teaches something, record it under [Integration log](#integration-log) and fix the step.
 
 ## The steps
 
@@ -29,12 +29,12 @@ The client holds no commercetools credentials, no data resolvers and no storage 
 **Client: once per client app**
 
 4. **Decide the client's contract with the platform.** Outcome: written decisions on page types and URLs, markets, failure behavior and origins.
-5. **Define the vocabulary.** Outcome: a validated catalog of components, data sources, sections and theme that matches the client's design system.
+5. **Define the vocabulary.** Outcome: a validated catalog of configurable and placeable components, data sources, sections and theme that matches the client's design system.
 6. **Build the renderer.** Outcome: the client fetches a render tree for the current location and draws it, with distinct handling for "no page" and "failure".
-7. **Implement the components the catalog names.** Outcome: every catalog type has a client component, including the route-driven product and listing ones.
+7. **Implement the components the catalog names.** Outcome: every catalog type has a client component; placeable ones wrap what the client already renders.
 8. **Publish the catalog.** Outcome: authors see the palette. Order: validate, deploy the client, push, publish.
 9. **Configure preview and the two-way framing and origin allowlists.** Outcome: authors preview drafts (and, on web, edit in place) inside Merchant Center.
-10. **Author and publish the first pages.** Outcome: home, category listing, product page and a content page are live.
+10. **Author and publish the first pages.** Outcome: each page type has a published default composition, and the first content pages are live.
 11. **Verify end to end.** Outcome: published, preview, failure and latency behavior all checked against real data.
 12. **Make it routine.** Outcome: the pipeline, secret rotation and upgrade path are written down and automated.
 
@@ -43,12 +43,31 @@ Steps 8 and 10 **write into the customer's commercetools project**. Show what wi
 ## Ground rules
 
 - **Intent before code.** For each step know what must be true afterwards; the commands and files are in `references/` and in the repos.
-- **The client stays thin.** If you are about to add a commercetools client, a resolver or a cache to the client app, stop: that belongs in the service.
+- **The client stays thin.** If you are about to add a commercetools client, a resolver or a cache to the client app for the page builder, stop: that belongs in the service. Wrapping code the client already has (its own data loading, cart, availability) in a placeable component is fine; see [Component modes](#component-modes).
 - **One owner per catalog.** Exactly one client pushes the catalog of a given commercetools project; two would overwrite each other.
 - **Order is load-bearing.** Deploy the client before pushing a catalog that names its components. Register the MC app before deploying it. Know every client origin before deploying the MC app (it is baked into its CSP).
 - **Deploys and registrations are the owner's.** Deploying to Connect and registering the Merchant Center app are done by the project owner, who has the credentials. The agent prepares the inputs, gives exact values and checks the result; it does not deploy or register.
 - **Secrets never go in chat, commits or screenshots.** Generate them, put them in the platform's secret store and the client's CI secrets.
 - **Distinguish "no page" from "failure"** everywhere in the client. They need different screens and different monitoring.
+
+---
+
+## Component modes
+
+Not every component an author can use is "configurable". Decide the mode of each one; it drives its catalog entry and its implementation.
+
+| Mode | What the author controls | Examples | Catalog entry |
+|---|---|---|---|
+| **Configurable** | The content: text, images, links, data bindings | Banner, hero, rich text, a product or category picker | Fields, including data-source fields |
+| **Placeable** | Only whether it is on the page, where, and on which devices. It renders what the page already renders | Listing facets, sort control, pagination, breadcrumb, a product page's buy box | No fields, limited to the page types where it makes sense |
+| **Hybrid** | Presentation settings over data that arrives from elsewhere | Product listing tiles (data from the page; settings such as items per row, show price, show swatches), a carousel | A few fields (toggles, counts, selects); data arrives through a data source or a route-driven slice |
+
+A placeable or hybrid component gets its data one of two ways:
+
+- **From the platform**, through a route-driven slice in the canonical shapes. Best when the contract carries everything the piece needs.
+- **From the client's own pipeline**: it wraps the piece the client already has, with that piece's own data loading, URL handling, session, cart and availability. Best when the piece owns behavior the contract does not carry. **Wrap, do not rebuild.**
+
+Consequence: a transactional page (listing, product detail) is not a special case. It is a composition of placeable and configurable pieces. Its default arrangement reproduces today's page, and authors then add configurable blocks (a banner above the listing) around it.
 
 ---
 
@@ -116,7 +135,7 @@ Details: [references/platform.md](references/platform.md).
 **First, inventory the client (read-only).** Before deciding, read the client for the things that constrain the integration: its routes and which pages are native today; how markets and locales appear in URLs and in sessions; its security headers (can it be framed?); any access gate or login wall in front of it; its architecture and lint rules (what components may import, how links and colors are done); where its content comes from today; its build and deploy pipeline and whether it is in a separate repository from the page builder.
 
 **Decide**
-- **Adoption scope.** Which existing pages become page-builder driven, and in what order. Prefer content-led pages (home, landing and editorial pages) first. Keep transactional pages (product detail, listing, cart) native until the content-led ones are proven; their system components replace native behavior and are the riskiest swap.
+- **Adoption scope.** Which existing pages become page-builder driven, and in what order. Any page can adopt, including listing and product pages, because they are compositions of placeable pieces that wrap what the client already renders plus configurable blocks (see [Component modes](#component-modes)). The risk is how much of a native page you rebuild, not which page it is, so adopt by wrapping. A content-led page (home, a landing page) is still a good first proof because it needs the least wrapping.
 - **Page types and URL scheme.** Which of home, category listing, product detail and free-form content pages the client has, and the path template of each. The service uses the same templates to map a path to a page, so the client's navigation must produce exactly those paths.
 - **Markets.** How the client derives locale, currency, country and (optionally) the commercetools store key for every request. Check that "store" means a commercetools store: some clients use the word for a pickup or collection location, which is not what the render call's `store` is. Omit it when the client does not scope its catalog by commercetools store.
 - **URL casing and the locale segment.** Whether the locale in the URL matches the locale value the service receives and whether route templates keep a locale placeholder.
@@ -131,9 +150,10 @@ Details: [references/platform.md](references/platform.md).
 **Intent.** The catalog is the contract between what developers can render and what authors can place. The client owns it.
 
 **Decide**
-- **Components.** Inventory the design system's real building blocks and choose which are authorable. Model what an editor varies, not every prop. Each gets a stable type key, typed fields (text, rich text, number, boolean, select, image, link, repeatable group, data source), the sections and page types it may appear in, and a group for the palette.
+- **Components and their mode.** Inventory the design system's real building blocks and, for each native page, the pieces it is made of. Give each a mode: configurable, placeable or hybrid. Model what an editor varies, not every prop. Each gets a stable type key, its fields (none for a placeable one), the sections and page types it may appear in, and a group for the palette.
+- **Dependencies between pieces.** Pieces of one page often share state (a listing's facets, sort, pagination and tiles share the URL parameters). Decide what happens when an author removes one, places it twice, or places it on a page type it does not belong to: it must degrade quietly (render nothing), never break the page. Restrict each piece to the page types where it makes sense.
 - **Data sources.** What dynamic data components can bind to (product lists, category lists, a product, ...). Each names a service-side resolver kind; the client never resolves data.
-- **System components.** The route-driven ones (product detail, category listing) take their data from the URL and expose named slices (price, gallery, facets, ...). Decide which slices the client's design needs.
+- **Route-driven pieces.** Pieces whose data comes from the URL expose named slices (price, gallery, facets, ...). Decide, per piece, whether it takes a slice from the platform or wraps the client's own implementation.
 - **Sections and theme.** The named regions of a page and the tokens that map to the design system (container width, gaps, section backgrounds).
 
 **Done when** the catalog file validates (the service checks structure and references, and reports every violation at once).
@@ -163,7 +183,9 @@ Platform-neutral contract: [references/render-contract.md](references/render-con
 - Read and follow the client's own conventions first (its link component, design tokens, accessibility and lint rules, import boundaries). Authored components are ordinary client code and must pass the same gates.
 - Map every type key to a component. Unknown types must fail soft (skip and log), not crash the page.
 - Consume data in the service's canonical shapes (product card, product detail, category node, search result). Do not re-fetch from commercetools.
-- Implement the system components using their slices; a slice may be absent, so each piece degrades.
+- **Placeable components wrap what the client already renders.** They take no settings from the author. Reuse the client's existing component and its data path (URL parameters, its own data loading, session); do not duplicate it. Each must work wherever it is placed, and render nothing when its context is missing.
+- **Hybrid components** receive data (from a data source or a route-driven slice) and apply the author's presentation settings; the data is never the author's to edit.
+- Implement the route-driven pieces that take platform slices using those slices; a slice may be absent, so each piece degrades.
 - Own empty, loading and error states per component.
 - Links and images come from fields; resolve link targets with the client's router so navigation stays native.
 - On web, mark editable text so the visual editor can edit in place (inert for shoppers). Native clients skip this.
@@ -176,7 +198,7 @@ Platform-neutral contract: [references/render-contract.md](references/render-con
 
 **Order.** Validate on every change request (writes nothing) → deploy the client → push (writes a draft; repeating is a no-op) → publish (the go-live gate). Pushing before the client is deployed would let authors place a component the live client cannot draw.
 
-**Do** wire the three calls into the client's pipeline using the admin secret from the CI secret store. **Confirm with the user before the first push**: it writes into the project.
+**Do** wire the three calls into the client's pipeline using the admin secret from the CI secret store. The skill ships a dependency-free script for them, [`scripts/catalog.mjs`](scripts/catalog.mjs): copy it into the client's repository. **Confirm with the user before the first push**: it writes into the project.
 
 **Done when** the MC palette lists the components, data sources and sections, and reading the catalog back shows the published state.
 
@@ -199,8 +221,7 @@ Platform-neutral contract: [references/render-contract.md](references/render-con
 **Intent.** Content exists, authored by the people who will own it.
 
 **Do**
-- Author in the Merchant Center editor: home, the category listing fallback, the global product page template, and a content page. Save as draft, preview, publish.
-- Seed scripts exist for local development; they write directly with an API client and are not for customer projects.
+- Author in the Merchant Center editor a **default composition** per page type: the placeable pieces arranged as the native page is today (listing: breadcrumb, facets, sort, tiles, pagination; product page: gallery, price, buy box, description). Then the content pages and the first configurable blocks around them. Save as draft, preview, publish.
 - **Confirm before writing anything on the author's behalf.**
 
 **Done when** each page type renders for real paths in the client from published content.
@@ -209,6 +230,8 @@ Platform-neutral contract: [references/render-contract.md](references/render-con
 
 **Check**
 - Every page type, every market, desktop and small screen.
+- **Parity:** a page with the default composition matches the native page it replaces (layout, behavior, URLs, analytics hooks).
+- **Composition changes:** remove each placeable piece in turn, reorder them, and place one twice: the page still works and nothing breaks.
 - Draft preview with the token; a wrong token shows the published page; edit mode (web).
 - **Failure modes on purpose:** service stopped → degraded screen, not "not found"; a path with no page → real "not found"; a wrong service URL → a logged error, not a silent "not found".
 - Latency of the render call at p95 against the client budget, measured on the production-type deployment.
@@ -231,6 +254,7 @@ Platform-neutral contract: [references/render-contract.md](references/render-con
 
 Append what each real integration teaches. Format: date, project type, step, what happened, what the step should say now.
 
+- **2026-10-27, user guidance during the first integration, steps 4, 5, 7, 10, 11.** The skill had called listing and product pages the riskiest swap because their system components replace native behavior. The user's correction: components are not all configurable. Some are only **placeable** (facets, sort, pagination: the author decides if they are on the page, not what they say), some are **hybrid** (listing tiles take data but also presentation settings), and some are **configurable** (a banner). A transactional page is a composition of these, so it can adopt incrementally by wrapping what already exists. Added the [Component modes](#component-modes) section and the matching decisions, implementation rules, default compositions and parity checks.
 - **2026-10-26, web storefront (Next.js, locale-prefixed URLs, access gate), read-only inventory, steps 4 and 9.**
   - The client's security headers forbid framing entirely. Step 9 must change them for the environments used for preview.
   - A cookie-based access gate sits in front of the site, so the editor's frame would hit the gate. Step 9 now says to decide how preview passes it.

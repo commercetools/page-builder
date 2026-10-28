@@ -43,7 +43,7 @@ Top level: `wireVersion`, `preview`, `editMode`, `sections` (required); `pageId`
 
 - lays the grid out on the contract's 12 columns with breakpoints at tablet (>= 768 px) and desktop (>= 1024 px) on web, and equivalent size classes on other platforms, honoring per-device hiding;
 - applies `theme` (container width, gaps, section backgrounds);
-- maps each component's type key to its own component.
+- maps each component's type key to its own component. A component may carry no settings at all: a **placeable** one (facets, sort, pagination) is only present or absent, and the client renders its own content for it. A **hybrid** one (listing tiles) receives data plus a few presentation settings.
 
 ## Preview and edit flags
 

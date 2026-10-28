@@ -11,9 +11,8 @@ By contributing you agree that your contribution is licensed under the [MIT lice
 | `page-builder-service/` | The service (Connect application): render API, catalog ingest, Merchant Center object gateway | `npm test`, `npm run typecheck`, `npm run lint:api` |
 | `packages/page-builder/` | The storefront shim (`@commercetools-labs/page-builder`) | `npm install --legacy-peer-deps`, then `npm test`, `npm run typecheck` |
 | `page-editor/` | The Merchant Center custom application | `yarn test`, `yarn typecheck`, `yarn lint` |
-| `examples/nextjs-storefront/` | A small reference storefront | `npm run typecheck` |
-| `seed/` | Development scripts that write sample data into a project | |
-| `openspec/`, `docs/sdd/` | What the product does and the wire contracts | |
+| `docs/sdd/` | The wire contracts shared by the service, the shim and the editor | |
+| `skills/` | The integration guide for client applications | |
 
 The service runs entirely against an in-memory commercetools in its tests, so you need no credentials to run any of the checks above.
 
@@ -21,7 +20,7 @@ The service runs entirely against an in-memory commercetools in its tests, so yo
 
 - Keep the change focused and say what problem it solves.
 - Run the checks for every directory you touched. The service enforces coverage floors; please don't lower them.
-- If you change behavior, update the matching spec in `openspec/specs/` or the contract in `docs/sdd/`, and the README that describes it.
+- If you change behavior, update the contract in `docs/sdd/` (when it is a wire format) and the README that describes it.
 - If you change the HTTP API, change `page-builder-service/openapi.yaml` and regenerate the types (`npm run generate:api` in the service and in the shim). A test fails when they drift.
 - Do not commit secrets, API clients or project-specific values. `.env` files are git-ignored; add placeholders to the `.env.example` next to them.
 

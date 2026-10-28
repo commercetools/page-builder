@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 /**
- * Catalog CI client: validate / push / publish `page-builder.catalog.json` against the
- * page-builder service. No dependencies beyond Node 20.
+ * Catalog CI client: validate / push / publish the client's catalog file against the
+ * page-builder service. No dependencies beyond Node 20. Copy it into the client's repository.
  *
- *   node scripts/catalog.mjs validate   # PR check: nothing is written
- *   node scripts/catalog.mjs push       # write the catalog as a draft (idempotent)
- *   node scripts/catalog.mjs publish    # go live (run after the storefront deploy succeeds)
+ *   node catalog.mjs validate [file]   # change-request check: nothing is written
+ *   node catalog.mjs push [file]       # write the catalog as a draft (idempotent)
+ *   node catalog.mjs publish           # go live (run after the client's deploy succeeds)
  *
- * Env: PB_SERVICE_URL (e.g. https://service-….commercetools.app/service), PB_ADMIN_SECRET.
+ * `file` defaults to $PB_CATALOG_FILE, then ./page-builder.catalog.json in the current directory.
+ * Env: PB_SERVICE_URL (the service URL including /service, e.g.
+ * https://service-….commercetools.app/service) and PB_ADMIN_SECRET. Keep the secret in CI secrets only.
  */
 
 import { readFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 
-const CATALOG_FILE = join(dirname(fileURLToPath(import.meta.url)), '..', 'page-builder.catalog.json');
 const COMMANDS = new Set(['validate', 'push', 'publish']);
 
 function fail(message) {
@@ -23,7 +23,8 @@ function fail(message) {
 }
 
 const command = process.argv[2];
-if (!COMMANDS.has(command)) fail(`usage: catalog.mjs <${[...COMMANDS].join('|')}>`);
+if (!COMMANDS.has(command)) fail(`usage: catalog.mjs <${[...COMMANDS].join('|')}> [catalog file]`);
+const CATALOG_FILE = resolve(process.argv[3] ?? process.env.PB_CATALOG_FILE ?? 'page-builder.catalog.json');
 
 const base = process.env.PB_SERVICE_URL?.replace(/\/+$/, '');
 const secret = process.env.PB_ADMIN_SECRET;
@@ -64,7 +65,12 @@ if (command === 'publish') {
   if (status !== 200) fail(`publish failed (${status}): ${json.error?.message ?? JSON.stringify(json)}`);
   console.log(`published catalog appVersion ${json.appVersion} at ${json.publishedAt}`);
 } else {
-  const catalog = JSON.parse(await readFile(CATALOG_FILE, 'utf8'));
+  let catalog;
+  try {
+    catalog = JSON.parse(await readFile(CATALOG_FILE, 'utf8'));
+  } catch (err) {
+    fail(`cannot read the catalog file ${CATALOG_FILE}: ${err.message}`);
+  }
   const path = command === 'validate' ? '/v1/catalog/validate' : '/v1/catalog';
   const { status, json } = await call(path, catalog);
   report(json);

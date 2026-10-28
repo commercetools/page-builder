@@ -3,6 +3,7 @@ deployAs:
     applicationType: merchant-center-custom-application
     configuration:
       standardConfiguration:
+        # Merchant Center registration
         - key: CUSTOM_APPLICATION_ID
           description: The Custom Application ID
           required: true
@@ -10,13 +11,21 @@ deployAs:
           description: The Application entry point URI path
           required: true
           default: 'page-editor'
-        - key: INITIAL_PROJECT_KEY
-          description: development project key
-          required: true
         - key: CLOUD_IDENTIFIER
           description: one of the following gcp-us, gcp-eu, aws-us, aws-eu
           required: true
           default: 'gcp-eu'
+        - key: INITIAL_PROJECT_KEY
+          description: development project key
+          required: true
+        # Connection to the page-builder service (optional)
+        - key: PAGE_BUILDER_SERVICE_URL
+          description: page-builder service URL including its /service path; empty keeps the app on the Merchant Center GraphQL gateway
+          required: false
+        - key: PAGE_BUILDER_SERVICE_HOOKS
+          description: all, or a comma list of hook families (pages, page-components, comments, workflows, page-workflow, preview-settings, data-sources, sections, components, instances, reset) that use the service; empty means none
+          required: false
+        # Image picker (optional)
         - key: IMAGE_PICKER_BASE_URL
           description: contentools media service base URL including the /service path prefix; empty disables the image picker
           required: false
@@ -24,17 +33,12 @@ deployAs:
           description: business unit key namespacing media storage
           required: false
           default: 'default'
-        - key: PAGE_BUILDER_SERVICE_URL
-          description: page-builder service URL including its /service path; empty keeps the app on the Merchant Center GraphQL gateway
-          required: false
-        - key: PAGE_BUILDER_SERVICE_HOOKS
-          description: all, or a comma list of hook families (pages, page-components, comments, workflows, page-workflow, preview-settings, data-sources, sections, components, instances, reset) that use the service; empty means none
-          required: false
   - name: page-builder-service
     applicationType: service
     endpoint: /service
     configuration:
       standardConfiguration:
+        # Who may call the service
         - key: PB_RENDER_ORIGINS
           description: comma-separated storefront server origins allowed to call the render API
           required: true
@@ -45,6 +49,7 @@ deployAs:
         - key: PB_MC_ISSUER
           description: Merchant Center API Gateway the MC app's JWTs come from, as a cloud identifier (gcp-eu, gcp-us, gcp-au, aws-eu, aws-us) or a URL; the JWT audience is this service's own public origin, taken from the CONNECT_SERVICE_URL that Connect provides; unset disables the Merchant Center admin API
           required: false
+        # Read cache and listing facets (optional)
         - key: PB_CACHE_TTL_SECONDS
           description: seconds to cache commercetools reads; preview and draft reads are never cached; 0 disables the cache
           required: false
@@ -56,6 +61,7 @@ deployAs:
           description: maximum number of derived facets when PB_FACET_ATTRIBUTES is empty
           required: false
           default: '8'
+        # Operations (optional)
         - key: LOG_LEVEL
           description: one of debug, info, warn, error
           required: false

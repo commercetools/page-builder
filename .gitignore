@@ -2,7 +2,6 @@ node_modules
 public
 dist
 .env.local
-.env.seed
 .idea
 .DS_Store
 .connect
@@ -13,3 +12,4 @@ page-builder-service/.env
 .env
 .npmrc
 *.tsbuildinfo
+.env.seed

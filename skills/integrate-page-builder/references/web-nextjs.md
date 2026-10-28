@@ -1,6 +1,6 @@
 # Web (Next.js App Router): using the shim
 
-Supports steps 6 to 9 for a web client. Other platforms implement [render-contract.md](render-contract.md) directly instead. The package is `@commercetools-labs/page-builder`; its README and the reference storefront in `examples/` are the working examples.
+Supports steps 6 to 9 for a web client. Other platforms implement [render-contract.md](render-contract.md) directly instead. The package is `@commercetools-labs/page-builder`; its README documents the component and the settings.
 
 ## What the web integration consists of
 
@@ -9,7 +9,7 @@ Three things, and nothing else:
 1. **One mount.** A single catch-all route renders every page: it passes the request path, the shopper's market (locale, currency, country, store) and the search params to the shim's `PageBuilder` component, plus two fallbacks.
    - `fallback`: rendered when the service has no page for the path. Make it a real "not found".
    - `errorFallback`: rendered when the service is unreachable or erroring. Make it a degraded but usable page. It defaults to `fallback`, which would turn every outage into a "not found"; set it.
-2. **A component map.** Catalog type key to React component. Components receive the author's settings, already localized, with data in canonical shapes. Server components and async components work. Wrap editable text so the visual editor can edit in place; it is inert for shoppers.
+2. **A component map.** Catalog type key to React component. Configurable and hybrid components receive the author's settings, already localized, with data in canonical shapes. Placeable components receive no settings: they wrap the client's existing component and read their own context (the forwarded search params, the client's data path). Server components and async components work. Wrap editable text so the visual editor can edit in place; it is inert for shoppers.
 3. **A catalog file.** A JSON file of component types, data sources, sections and theme that validates against the schema shipped in the package.
 
 The client has no commercetools client, resolvers, Tailwind setup or preview/bridge code. The grid CSS is scoped and self-contained.
@@ -44,7 +44,7 @@ The Merchant Center frames the client to preview it. The client's response heade
 
 ## Catalog in CI
 
-Three calls against the service with the admin secret, in this order: validate (on change requests, writes nothing), then after the client deploys, push and publish. The reference storefront ships a dependency-free script for this.
+Three calls against the service with the admin secret, in this order: validate (on change requests, writes nothing), then after the client deploys, push and publish. The skill ships a dependency-free script for exactly this, `scripts/catalog.mjs` (copy it into the client's repository; it takes the catalog file as an argument and `PB_SERVICE_URL` and `PB_ADMIN_SECRET` from the environment).
 
 ## Rendering rules
 

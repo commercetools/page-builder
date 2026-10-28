@@ -171,7 +171,7 @@ export type SavedDataSource = {
 };
 
 /**
- * Storefront preview (see openspec/specs/storefront-preview/spec.md).
+ * Storefront preview (see docs/sdd/preview-contract.md).
  * Per-project config for embedding a host-rendered preview of the page being
  * edited. Stored as a single custom object `page-editor/settings`.
  */

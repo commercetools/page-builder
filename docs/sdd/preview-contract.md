@@ -2,8 +2,7 @@
 
 > The contract between the page-builder **service**, the storefront **shim**
 > (`packages/page-builder`, v1.0) and the Merchant Center editor. Behavior that consumes it is
-> specified in `openspec/specs/storefront-preview/` (the MC app's preview mode) and
-> `openspec/specs/visual-editing/` (the editing bridge).
+> implemented in the Merchant Center app's preview mode and its visual-editing bridge.
 >
 > **v1.0 changes who does what.** A host no longer reads custom objects, resolves data sources,
 > validates the preview token or ships a registry/Tailwind setup. The service reads the pages (§2
@@ -28,7 +27,7 @@ The contract has five layers:
 | A. Page JSON wire format | editor writes → host reads | 1 | here §2 |
 | B. Component type-key vocabulary | shared | 1 | here §3 |
 | C. Data-source binding | shared | 1 | here §4 |
-| D. Preview settings + draft flag | editor → host (URL) | 1 | `openspec/specs/storefront-preview/` (recap §5) |
+| D. Preview settings + draft flag | editor → host (URL) | 1 | here §5 |
 | E. Visual-editing bridge | editor ↔ host (`postMessage`) | 2–3 | here §6–9 |
 
 Layers A–D exist today (hosts already consume them); layer E is new.
@@ -67,7 +66,7 @@ skipping a component whose object is missing rather than failing the page.
 
 > Pre-split pages (one combined `schemaVersion: 2` object in container `page-editor`, with
 > `draft.versions[]` and an inline `published`) are still readable as a fallback. The editor
-> forces a one-time migration; see `openspec/specs/storage-maintenance/`.
+> forces a one-time migration.
 
 The service renders `published.page` normally, and under the preview token (§5) the **latest
 draft version** — `draft.versions[draft.versions.length - 1].page`, **not** `draft.page`
@@ -117,8 +116,7 @@ the host implements and to learn which fields are inline-editable.
 
 A `settings` value that is a **string equal to a saved data-source instance id** is a
 binding. The **service** resolves it at render to commercetools data in the canonical shapes
-(`canonical-shapes.md`); the builder never resolves it (it stores only the id — see
-`openspec/specs/data-source-bindings/`). A `dataSource` field whose id names no instance
+(`canonical-shapes.md`); the builder never resolves it (it stores only the id). A `dataSource` field whose id names no instance
 renders as `null`, never as the raw id.
 
 - Instances live in custom object `page-editor` / `data-source-instances`
@@ -132,7 +130,7 @@ renders as `null`, never as the raw id.
 
 ## 5. Layer D — Preview settings + draft flag (recap)
 
-Specified in `openspec/specs/storefront-preview/`. In brief: a per-project `PreviewSettings`
+In brief: a per-project `PreviewSettings`
 custom object (`page-editor/settings`) gives the builder the host `baseUrl`, locales,
 per-page-type route templates, PDP sample sku/slug, optional `vars` (e.g. `brand`), and
 a shared `token`. The builder builds a URL and appends `?pb_preview=<token>` plus
@@ -259,5 +257,5 @@ interface BridgeMessage { channel: 'pb-visual-editing'; v: 1; type: string; payl
 
 - Host-side data fetching: the service owns all commercetools reads and resolution (layer C).
 - Rendering components inside the MC app — the host renders; the builder embeds.
-- Defining MC-app behavior (see `openspec/specs/visual-editing/`) or the shim and service
-  implementations (see `packages/page-builder/`, `page-builder-service/`).
+- Defining MC-app behavior, or the shim and service implementations (see
+  `page-editor/`, `packages/page-builder/`, `page-builder-service/`).

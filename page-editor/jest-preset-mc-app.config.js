@@ -17,7 +17,7 @@
  *    per-test `jest.spyOn` restores too early to catch it.
  *  - the empty-`href` warning — `@commercetools/nimbus`'s own `Tabs` renders
  *    every tab as an anchor with `href=""`, once per tab. Not ours to fix; see
- *    openspec/changes/add-test-coverage-85/findings.md #8.
+ *    the project's earlier coverage findings (#8).
  */
 module.exports = {
   silenceConsoleWarnings: [

@@ -38,14 +38,12 @@ Pages, and saved data source instances, still follow the same **draft → publis
 
 - [Getting started](#getting-started)
 - [Development](#development)
-- [Seeding data](#seeding-data)
 - [Domain model](#domain-model)
 - [Pages view](#pages-view)
 - [Page Builder](#page-builder)
 - [Catalogs: components, data sources, sections](#catalogs-components-data-sources-sections)
 - [Host integration](#host-integration)
 - [Custom objects](#custom-objects)
-- [Roadmap and TODO](#roadmap-and-todo)
 - [Project structure](#project-structure)
 
 ---
@@ -76,84 +74,6 @@ All dev commands run from the `page-editor/` directory:
 | `yarn test` | Jest tests |
 | `yarn test:service` | The same suite with every hook family routed through the page-builder service transport |
 | `yarn format` | Prettier |
-
----
-
-## Seeding data
-
-Seed scripts live in `seed/` — a standalone directory separate from the webapp. They have no runtime dependencies and use only Node.js built-ins.
-
-Components, data sources, sections and theme are owned by the host's catalog file and pushed to the service (see [Host integration](#host-integration)). `seed/data/catalog.json` is a sample catalog in that format; `npm run catalog` pushes and publishes it through the service. Pages need seeding (or authoring) either way; the page seed script writes custom objects directly with an API client, which is a development convenience.
-
-### 1. Create a CT API client (pages only)
-
-The catalog is pushed through the service (`PB_SERVICE_URL`, `PB_ADMIN_SECRET`; no API client). Seeding pages writes directly, so create a client for that. In the Merchant Center go to **Settings → Developer → API clients** and create a client with the scope:
-
-```
-manage_key_value_documents:<your-project-key>
-```
-
-### 2. Create `seed/.env.seed`
-
-Copy the example file and fill in your credentials:
-
-```bash
-cp seed/.env.seed.example seed/.env.seed
-```
-
-`seed/.env.seed` is git-ignored — never commit real credentials.
-
-| Variable | Description |
-|---|---|
-| `CTP_PROJECT_KEY` | Your CT project key |
-| `CTP_CLIENT_ID` | API client ID |
-| `CTP_CLIENT_SECRET` | API client secret |
-| `CTP_AUTH_URL` | Auth endpoint for your region (e.g. `https://auth.europe-west1.gcp.commercetools.com`) |
-| `CTP_API_URL` | API endpoint for your region (e.g. `https://api.europe-west1.gcp.commercetools.com`) |
-
-### 3. Run the seed scripts
-
-From the `seed/` directory:
-
-```bash
-cd seed
-
-# The catalog, through the service (validate, push, publish)
-PB_SERVICE_URL=https://…/service PB_ADMIN_SECRET=… npm run catalog
-node scripts/seed-catalog.js --validate    # validate only
-
-# Pages (direct to commercetools; needs seed/.env.seed)
-npm run pages         # every page in seed/data/pages/ (pass --page-id to seed just one)
-npm run all           # catalog, then pages
-
-# Pull the current pages back down to disk:
-npm run download:pages
-```
-
-Additional flags (run scripts directly for more control):
-
-```bash
-# Use a different env file
-node scripts/seed-pages.js --env .env.production.seed
-
-# Seed a specific page
-node scripts/seed-pages.js --page-id about
-
-# Preview what would be sent without hitting the API
-node scripts/seed-pages.js --dry-run
-```
-
-Each script fetches an OAuth token, then upserts one CT custom object holding both the draft history and the published state. On success it prints the CT `version` and `lastModifiedAt`.
-
-Seed data lives in `seed/data/`:
-
-| File / directory | Contents |
-|---|---|
-| `catalog.json` | Sample host catalog: components (with `fill` for system components), data sources (with `resolver.kind`), sections and theme |
-| `data-source-instances.json` | Example saved data source instances |
-| `pages/*.json` | One file per seeded page (`home.json`, `cat-root.json`, `pdp-cat-root.json`, …) |
-
-`seed/custom-objects.md` predates the current single-object-per-catalog shape — treat [Custom objects](#custom-objects) below as authoritative for container/key names.
 
 ---
 
@@ -362,7 +282,7 @@ Merchant Center ──(MC user JWT)──▶ service ◀──(render key)──
                           commercetools custom objects, products, categories
 ```
 
-A complete host is [`examples/nextjs-storefront`](examples/nextjs-storefront) — about a catch-all route, a component map and a catalog file. Contracts: [definitions](docs/sdd/definitions-contract.md), [preview and bridge](docs/sdd/preview-contract.md), [canonical shapes](docs/sdd/canonical-shapes.md), and the HTTP API in [`openapi.yaml`](page-builder-service/openapi.yaml).
+Step by step, for any client (web or native): [the integration guide](skills/integrate-page-builder/SKILL.md). Contracts: [definitions](docs/sdd/definitions-contract.md), [preview and bridge](docs/sdd/preview-contract.md), [canonical shapes](docs/sdd/canonical-shapes.md), and the HTTP API in [`openapi.yaml`](page-builder-service/openapi.yaml).
 
 ### Wire it up
 
@@ -370,7 +290,7 @@ A complete host is [`examples/nextjs-storefront`](examples/nextjs-storefront) �
 2. **Install the shim** — `npm i @commercetools-labs/page-builder` — and set `PB_SERVICE_URL`, `PB_RENDER_KEY`, `PB_ORIGIN`.
 3. **Mount it** in a catch-all route, passing the request path, the shopper's market (`locale`, `currency`, `country`, `store`) and `searchParams`.
 4. **Map components** — each catalog `type` to a React component taking `{ data }`; use `PBText` for inline-editable text.
-5. **Write the catalog file** and add the CI steps: validate on pull requests, push and publish after deploy (`scripts/catalog.mjs` in the example has no dependencies).
+5. **Write the catalog file** and add the CI steps: validate on pull requests, push and publish after deploy (`skills/integrate-page-builder/scripts/catalog.mjs` has no dependencies).
 6. **Point the Merchant Center app** at the service: set `PAGE_BUILDER_SERVICE_URL` and `PAGE_BUILDER_SERVICE_HOOKS` (see [Merchant Center app and the service](#merchant-center-app-and-the-service)), and give the project's preview settings the storefront's route templates.
 
 Preview and visual editing need nothing more in the host: forward `searchParams` and the service decides (token, drafts, edit mode, allowed origins, manifest).
@@ -406,44 +326,6 @@ All app data is stored in CT custom objects under one container, `page-editor`. 
 
 Every save appends a new entry to `draft.versions[]` (capped at 50); publishing copies the current draft into `published` and stamps it with `publishedAt`. The storefront, and this app's Page Builder for the three catalogs, only ever read `published`.
 
-`seed/custom-objects.md` predates this shape (it still documents separate `*-draft`/`*-published` objects) — treat the table above as authoritative.
-
----
-
-## Roadmap and TODO
-
-Known gaps identified during a codebase review (July 2026), grouped by priority. Not yet scheduled — tracked here so they aren't lost.
-
-### Delivery / last mile
-
-- [ ] **Ship a committed storefront consumer.** Publishing only writes the `page-<id>` custom object (`use-page-builder-connector.ts`); the `@commercetools-labs/page-builder` SDK can render it, but no running host in this repo actually reads published objects, and the reference hosts have `DYNAMIC_PAGES` off (hardcoded fallbacks). Wire at least one host to read live published pages end-to-end.
-- [ ] **Media library / asset upload.** Image fields are URL-paste only (`shared/field-editor.tsx`) — add file upload and an asset picker.
-- [ ] **In-app dynamic-data resolution (at least for preview).** Dynamic pages store product/category IDs but never resolve them in-app; resolution is deferred entirely to the host.
-
-### Robustness
-
-- [ ] **Handle version conflicts on save/publish.** The main path passes a stale `ctVersion` and never refetches on a 409 (`page-builder.tsx` save/publish handlers), so retries keep failing until a full reload. Reuse the read-modify-retry pattern already in `use-comments-connector.ts`.
-- [ ] **Surface real error causes.** Save/publish/workflow handlers discard the structured error from `extractErrorFromGraphQlResponse` in bare `catch {}` and show a generic toast — show the actual reason (permission / validation / conflict / network).
-- [ ] **Cap or split the page payload.** Up to 50 full page-tree snapshots (plus a full `published` copy) live in one custom object and are re-serialized on every save (`use-page-builder-connector.ts`) — risks CT's value-size limit on rich pages. Move to per-version or externalized history.
-- [ ] **Add automated tests.** Jest/RTL/MSW are scaffolded but there are zero tests. Start with the pure, high-value logic: slug validation (`page-path.ts`), version slicing, comment merge/retry.
-- [ ] **Gate actions by MC permission.** View-only users currently see enabled Save/Publish/Delete — add `useIsAuthorized` / `RestrictedByPermissions` checks, and remove the stale permission groups in `constants.ts`.
-
-### Builder depth
-
-- [ ] **Real per-element styling.** Only a 7-value theme enum exists — add color, typography, and spacing/padding controls, and either wire up or remove the dead "CSS ID" and "Market permissions" inputs (`settings-pane.tsx`).
-- [ ] **Usable version history.** 50 snapshots are stored but write-only — add restore and per-version preview. The menu-bar history button currently opens the workflow drawer only.
-- [ ] **Keyboard support.** Undo/redo have no shortcut (Cmd/Ctrl+Z is a no-op) and are lost on reload (in-memory only) — add shortcuts and consider persisting the stacks.
-- [ ] **Editing-model gaps:** multi-select, cross-page copy/paste, cross-layout component drag in the edit canvas, and true per-breakpoint styling (only show/hide toggles exist today).
-- [ ] **Page organization:** folders, tags, filter, sort, and page duplication. Wire up or remove the no-op "Import" (`pages.tsx`) and detail "Preview" (`page-detail.tsx`) buttons.
-- [ ] **Generic primitives in the seed catalog:** rich-text block, standalone image, spacer/divider, columns container, button, video, HTML embed.
-
-### Polish and collaboration follow-ups
-
-- [ ] **i18n regression.** The comments and workflows surfaces, plus all save/publish/workflow toasts, are hardcoded English — extract into `defineMessages` so `extract-intl` picks them up.
-- [ ] **Accessibility.** Page-building is mouse-only native HTML5 drag-and-drop — add a keyboard path, roles/landmarks, and React error boundaries to contain a canvas crash.
-- [ ] **Workflow enforcement is UI-only** (tamper-able via the API); true approval gates need a backend service.
-- [ ] **@-mention notifications are poll-based** (no email/push; unread is per-device) — a notification service could push these.
-
 ---
 
 ## Project structure
@@ -473,25 +355,8 @@ packages/
 page-builder-service/          # The per-project Connect service: render, catalog ingest, MC object gateway
   openapi.yaml                 # The /v1 API; shim and service types are generated from it
 
-examples/
-  nextjs-storefront/           # Minimal Next.js host: catch-all route, component map, catalog file, CI client
-
 docs/sdd/                      # Wire contracts shared by the service, shim and builder
 
-openspec/                     # Behavior specs — authoritative for what the app does today
-  specs/                      # One directory per capability, each with a spec.md
-  changes/                    # In-flight change proposals (page-builder-service)
-
-seed/                         # Standalone seed scripts (no webapp dependency)
-  scripts/
-    seed-catalog.js           # Push + publish data/catalog.json through the service
-    seed-pages.js             # Seed page content (data/pages/*.json) directly
-    download-pages.js         # Pull the current pages back down to disk
-  data/
-    catalog.json              # Sample host catalog (components, data sources, sections, theme)
-    data-source-instances.json # Example saved data source instances
-    pages/                    # One file per seeded page
-  custom-objects.md           # Custom object schemas (predates schema v2 — see Custom objects)
-  .env.seed.example           # Template for CT credentials
-  package.json                # npm scripts for running the seed commands
+skills/
+  integrate-page-builder/       # The step-by-step guide for integrating a client application
 ```
