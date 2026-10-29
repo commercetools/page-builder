@@ -98,6 +98,24 @@ gcloud iam service-accounts keys create key.json --iam-account=$SA
 base64 -i key.json | tr -d '\n'      # the value of PB_MEDIA_SERVICE_ACCOUNT_KEY_B64
 ```
 
+**Check that the files are public.** The editor and the published pages load a file with no credentials, so after the
+first upload an anonymous request for its URL must succeed:
+
+```bash
+curl -sI https://storage.googleapis.com/$BUCKET/<key of an uploaded file> | head -1    # HTTP/2 200
+```
+
+`403 AccessDenied` means the `allUsers` binding is not in effect. The service cannot fix that: it sets no per-object
+ACL on purpose, because a uniform-access bucket refuses them, so whether a file is public is decided by the bucket alone.
+Look at the output of the `allUsers` binding command above, which fails when either of these applies:
+
+- **Public access prevention** is enforced on the bucket (a bucket made in the console may have it on). Clear it with
+  `gcloud storage buckets update gs://$BUCKET --no-public-access-prevention`, then run the binding command again.
+- **Your organisation forbids it**: the org policy `constraints/storage.publicAccessPrevention` enforces prevention on
+  every bucket, and `constraints/iam.allowedPolicyMemberDomains` (domain-restricted sharing) refuses `allUsers`. Neither
+  can be overridden per bucket. Ask an organisation administrator for an exception, or use a bucket in a project outside
+  the restriction.
+
 Set `PB_MEDIA_BUCKET` and `PB_MEDIA_SERVICE_ACCOUNT_KEY_B64` together (setting one is a start-up error). If your
 organisation blocks service-account keys (`iam.disableServiceAccountKeyCreation`) this service cannot reach the bucket:
 it has no Workload Identity path, because Connect does not run in your Google Cloud project.
