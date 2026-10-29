@@ -2,7 +2,8 @@
  * Merchant Center media API: upload a file, and browse what has been uploaded.
  *
  * Same trust model as the admin object gateway — the editor calls it through the MC API Gateway's
- * `forward-to`, and the forwarded JWT is verified before anything else happens. There is no separate
+ * `forward-to` (or, in local development, directly with `PB_DEV_TOKEN`), and the credential is
+ * verified before anything else happens. There is no separate
  * media credential and nothing to configure per business unit: one service serves one project, and
  * its bucket prefix is its namespace. Every upload is audit-logged with the acting user.
  *
@@ -12,9 +13,7 @@
 
 import multipart from '@fastify/multipart';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import type { JWTVerifyGetKey } from 'jose';
-import type { McConfig } from '../config.js';
-import { mcAuth } from '../mc-auth.js';
+import type { Authenticate } from '../mc-auth.js';
 import { MediaError } from '../media/errors.js';
 import { reasonOf, type MediaService } from '../media/media-service.js';
 import { MEDIA_KINDS, type MediaKind } from '../media/mime.js';
@@ -26,9 +25,8 @@ const MAX_LIMIT = 100;
 const MAX_CURSOR = 2048;
 
 export interface MediaRouteDeps {
-  mc: McConfig;
-  projectKey: string;
-  keys: JWTVerifyGetKey;
+  /** Proves the call comes from the Merchant Center app (see `editorAuth`). */
+  authenticate: Authenticate;
   /** `null` when media storage is not configured. */
   media: MediaService | null;
 }
@@ -111,7 +109,7 @@ function registerList(scope: FastifyInstance, media: MediaService): void {
 export function registerMedia(app: FastifyInstance, deps: MediaRouteDeps): void {
   const { media } = deps;
   app.register(async (scope) => {
-    scope.addHook('onRequest', mcAuth(deps.mc, deps.projectKey, deps.keys));
+    scope.addHook('onRequest', deps.authenticate);
     if (!media) {
       // Answered from the hook, before the body is parsed: a multipart request to a service with no
       // multipart parser would otherwise be refused with a misleading 415.

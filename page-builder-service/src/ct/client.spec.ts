@@ -19,13 +19,13 @@ const tokenRes = (expiresIn = 3600, value = 't1'): Response =>
 
 type Handler = (url: string, init: RequestInit) => Response | Promise<Response>;
 
-function harness(handler: Handler) {
+function harness(handler: Handler, config: CtConfig = ct) {
   const calls: Array<{ url: string; init: RequestInit }> = [];
   const fetchMock = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
     calls.push({ url: String(url), init: init ?? {} });
     return handler(String(url), init ?? {});
   });
-  const api = createApiRoot(ct, { fetch: fetchMock as unknown as typeof fetch });
+  const api = createApiRoot(config, { fetch: fetchMock as unknown as typeof fetch });
   return { api, calls };
 }
 
@@ -48,6 +48,14 @@ describe('createApiRoot', () => {
     expect(header(auth.init, 'Authorization')).toBe(`Basic ${Buffer.from('id:secret').toString('base64')}`);
     expect(api.url).toBe('https://api.test/us-store/custom-objects/c/k');
     expect(header(api.init, 'Authorization')).toBe('Bearer t1');
+  });
+
+  it('assumes no scope when none is configured, so the token carries the API client\'s own', async () => {
+    const h = harness((url) => (isToken(url) ? tokenRes() : json({})), { ...ct, scopes: undefined });
+    await h.api.categories().get().execute();
+    const body = decodeURIComponent(String(h.calls[0]!.init.body));
+    expect(body).toBe('grant_type=client_credentials');
+    expect(body).not.toContain('scope');
   });
 
   it('reuses the token across calls', async () => {

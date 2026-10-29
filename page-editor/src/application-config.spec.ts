@@ -14,6 +14,7 @@ const REQUIRED = {
 const OPTIONAL = [
   'PAGE_BUILDER_SERVICE_URL',
   'PAGE_BUILDER_SERVICE_HOOKS',
+  'PAGE_BUILDER_SERVICE_DEV_TOKEN',
 ] as const;
 
 const original = { ...process.env };
@@ -56,5 +57,46 @@ describe('custom application config', () => {
     await expect(
       processConfig({ processEnv: process.env, disableCache: true })
     ).rejects.toThrow('APPLICATION_URL');
+  });
+
+  describe('the development token for calling the service directly', () => {
+    const env = process.env as Record<string, string | undefined>;
+    const nodeEnv = env.NODE_ENV;
+    afterEach(() => {
+      env.NODE_ENV = nodeEnv;
+    });
+
+    /** The `additionalEnv` the config file declares, evaluated afresh for the given mode and token. */
+    const additionalEnv = (mode: string, token?: string) => {
+      withEnv(REQUIRED);
+      env.NODE_ENV = mode;
+      if (token !== undefined) env.PAGE_BUILDER_SERVICE_DEV_TOKEN = token;
+      let declared: Record<string, string> = {};
+      jest.isolateModules(() => {
+        // eslint-disable-next-line import/extensions
+        declared = require('../custom-application-config.mjs').default
+          .additionalEnv;
+      });
+      return declared;
+    };
+
+    it('is read for `yarn start`', () => {
+      expect(additionalEnv('development', 'secret-token')).toMatchObject({
+        pageBuilderServiceDevToken: 'secret-token',
+      });
+    });
+
+    it.each(['production', 'test'])(
+      'is never read when NODE_ENV is %s, so it cannot reach a deployed build',
+      (mode) => {
+        const declared = additionalEnv(mode, 'secret-token');
+        expect(declared.pageBuilderServiceDevToken).toBe('');
+        expect(JSON.stringify(declared)).not.toContain('secret-token');
+      }
+    );
+
+    it('is empty when none is set', () => {
+      expect(additionalEnv('development').pageBuilderServiceDevToken).toBe('');
+    });
   });
 });

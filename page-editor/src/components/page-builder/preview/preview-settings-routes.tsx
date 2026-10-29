@@ -1,6 +1,6 @@
 import { Box, Flex, FormField, TextInput } from '@commercetools/nimbus';
 import type {
-  PreviewSettingsDraft,
+  PreviewSettingsBind,
   PreviewSettingsLabel,
 } from './preview-settings-draft';
 
@@ -9,15 +9,10 @@ import type {
  * PreviewSettingsDialog, which is otherwise one long form.
  */
 export const PreviewSettingsRoutes = ({
-  draft,
-  set,
+  bind,
   label,
 }: {
-  draft: PreviewSettingsDraft;
-  set: <K extends keyof PreviewSettingsDraft>(
-    key: K,
-    value: PreviewSettingsDraft[K]
-  ) => void;
+  bind: PreviewSettingsBind;
   label: PreviewSettingsLabel;
 }) => (
   <Flex direction="column" gap={300}>
@@ -30,19 +25,14 @@ export const PreviewSettingsRoutes = ({
     <FormField.Root>
       <FormField.Label>{label('previewSettingsRouteHome')}</FormField.Label>
       <FormField.Input>
-        <TextInput
-          value={draft.routeHome}
-          onChange={(v) => set('routeHome', v)}
-          placeholder="/{locale}"
-        />
+        <TextInput {...bind('routeHome')} placeholder="/{locale}" />
       </FormField.Input>
     </FormField.Root>
     <FormField.Root>
       <FormField.Label>{label('previewSettingsRouteCategory')}</FormField.Label>
       <FormField.Input>
         <TextInput
-          value={draft.routeCategory}
-          onChange={(v) => set('routeCategory', v)}
+          {...bind('routeCategory')}
           placeholder="/{locale}/category/{slug}"
         />
       </FormField.Input>
@@ -51,8 +41,7 @@ export const PreviewSettingsRoutes = ({
       <FormField.Label>{label('previewSettingsRoutePdp')}</FormField.Label>
       <FormField.Input>
         <TextInput
-          value={draft.routePdp}
-          onChange={(v) => set('routePdp', v)}
+          {...bind('routePdp')}
           placeholder="/{locale}/{slug}/p/{sku}"
         />
       </FormField.Input>
@@ -60,11 +49,7 @@ export const PreviewSettingsRoutes = ({
     <FormField.Root>
       <FormField.Label>{label('previewSettingsRouteContent')}</FormField.Label>
       <FormField.Input>
-        <TextInput
-          value={draft.routeContent}
-          onChange={(v) => set('routeContent', v)}
-          placeholder="/{locale}/{slug}"
-        />
+        <TextInput {...bind('routeContent')} placeholder="/{locale}/{slug}" />
       </FormField.Input>
     </FormField.Root>
   </Flex>

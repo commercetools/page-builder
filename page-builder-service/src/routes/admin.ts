@@ -15,9 +15,7 @@
  */
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import type { JWTVerifyGetKey } from 'jose';
-import { mcAuth } from '../mc-auth.js';
-import type { McConfig } from '../config.js';
+import type { Authenticate } from '../mc-auth.js';
 import { ctStatus, isCtError } from '../ct/client.js';
 import type { CtStore } from '../ct/store.js';
 import {
@@ -42,9 +40,8 @@ const MAX_LIMIT = 500;
 const KEY_PATTERN = '^[A-Za-z0-9_-]{1,256}$';
 
 export interface AdminDeps {
-  mc: McConfig;
-  projectKey: string;
-  keys: JWTVerifyGetKey;
+  /** Proves the call comes from the Merchant Center app (see `editorAuth`). */
+  authenticate: Authenticate;
   store: CtStore;
 }
 
@@ -176,7 +173,7 @@ export function registerAdmin(app: FastifyInstance, deps: AdminDeps): void {
   const { store } = deps;
 
   app.register(async (scope) => {
-    scope.addHook('onRequest', mcAuth(deps.mc, deps.projectKey, deps.keys));
+    scope.addHook('onRequest', deps.authenticate);
     scope.addHook('preValidation', rejectForeignContainer);
 
     registerGetObject(scope, store);

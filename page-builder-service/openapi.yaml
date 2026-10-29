@@ -337,6 +337,10 @@ components:
         The exchange JWT the Merchant Center API Gateway adds when the MC app calls the service through
         `/proxy/forward-to` with the `forward-url-origin` audience policy. Verified against the gateway's JWKS;
         the project-key claim must equal the service's project.
+
+        In local development only, the value of `PB_DEV_TOKEN` is accepted in its place (the app's dev server
+        calls the service directly, as the gateway cannot reach localhost). The service refuses to start
+        with `PB_DEV_TOKEN` set in production.
     adminSecret:
       type: http
       scheme: bearer

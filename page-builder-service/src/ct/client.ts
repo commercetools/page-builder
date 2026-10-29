@@ -28,7 +28,8 @@ export function createApiRoot(ct: CtConfig, options: ApiRootOptions = {}): ApiRo
       host: ct.authUrl,
       projectKey: ct.projectKey,
       credentials: { clientId: ct.clientId, clientSecret: ct.clientSecret },
-      scopes: ct.scopes.split(/\s+/).filter(Boolean),
+      // Unset: no `scope` in the token request, so the token carries the API client's own scopes.
+      ...(ct.scopes && { scopes: ct.scopes.split(/\s+/).filter(Boolean) }),
       httpClient,
     })
     .withHttpMiddleware({ host: ct.apiUrl, httpClient, timeout: CT_TIMEOUT_MS, enableRetry: false })

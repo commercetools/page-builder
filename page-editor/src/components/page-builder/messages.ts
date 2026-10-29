@@ -890,6 +890,11 @@ export default defineMessages({
     id: 'PageBuilder.previewSettings.dialogTitle',
     defaultMessage: 'Preview settings',
   },
+  previewSettingsLoadFailed: {
+    id: 'PageBuilder.previewSettings.loadFailed',
+    defaultMessage:
+      'The saved preview settings could not be loaded, so they can’t be edited right now. Saving is disabled so they are not overwritten.',
+  },
   previewSettingsEnabled: {
     id: 'PageBuilder.previewSettings.enabled',
     defaultMessage: 'Enable preview',

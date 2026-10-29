@@ -21,6 +21,14 @@ export default defineMessages({
     id: 'Pages.previewSettings',
     defaultMessage: 'Preview settings',
   },
+  previewSettingsSaved: {
+    id: 'Pages.previewSettingsSaved',
+    defaultMessage: 'Preview settings saved.',
+  },
+  previewSettingsSaveFailed: {
+    id: 'Pages.previewSettingsSaveFailed',
+    defaultMessage: 'Preview settings could not be saved.',
+  },
   searchPages: {
     id: 'Pages.searchPages',
     defaultMessage: 'Search pages...',

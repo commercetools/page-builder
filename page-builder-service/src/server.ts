@@ -9,6 +9,8 @@ import { randomUUID } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
 import type { Deps } from './app.js';
 import type { ServiceConfig } from './config.js';
+import { registerDevCors } from './dev-cors.js';
+import { editorAuth } from './mc-auth.js';
 import { registerAdmin } from './routes/admin.js';
 import { registerCatalog } from './routes/catalog.js';
 import { registerMedia } from './routes/media.js';
@@ -74,10 +76,16 @@ function registerJsonParser(scope: FastifyInstance): void {
 }
 
 function registerAdminOrUnavailable(scope: FastifyInstance, config: ServiceConfig, deps: Deps): void {
-  if (config.mc && deps.mcKeys && config.ct) {
-    const { mc, ct } = config;
-    registerAdmin(scope, { mc, projectKey: ct.projectKey, keys: deps.mcKeys, store: deps.store });
-    registerMedia(scope, { mc, projectKey: ct.projectKey, keys: deps.mcKeys, media: deps.media });
+  const authenticate =
+    config.ct &&
+    editorAuth({
+      projectKey: config.ct.projectKey,
+      mc: config.mc && deps.mcKeys ? { config: config.mc, keys: deps.mcKeys } : null,
+      devToken: config.devToken,
+    });
+  if (authenticate) {
+    registerAdmin(scope, { authenticate, store: deps.store });
+    registerMedia(scope, { authenticate, media: deps.media });
     return;
   }
   scope.all('/v1/admin/*', async (_req, reply) =>
@@ -111,6 +119,11 @@ export function buildServer(config: ServiceConfig, deps: Deps | null = null, opt
 
   app.setNotFoundHandler(handleNotFound);
   app.setErrorHandler(handleError);
+
+  // Local development only: `loadConfig` refuses `PB_DEV_TOKEN` in production.
+  if (config.devToken) {
+    registerDevCors(app, { origins: config.editorOrigins, adminPrefix: `${config.basePath}/v1/admin/` });
+  }
 
   // Every route lives under the configured base path (Connect does not strip the app endpoint).
   app.register(

@@ -53,6 +53,7 @@ const Pages = () => {
   const previewSettingsState = usePreviewSettingsState();
   const {
     settings: previewSettings,
+    loadError: settingsLoadError,
     saving: settingsSaving,
     isOpen: settingsOpen,
     setIsOpen: setSettingsOpen,
@@ -310,6 +311,7 @@ const Pages = () => {
         isOpen={settingsOpen}
         onOpenChange={setSettingsOpen}
         settings={previewSettings}
+        loadError={settingsLoadError}
         saving={settingsSaving}
         onSave={handleSaveSettings}
       />

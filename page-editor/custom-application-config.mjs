@@ -8,6 +8,14 @@ import { PERMISSIONS } from './src/constants';
 const optionalEnv = (name) => process.env[name] ?? '';
 
 /**
+ * Settings only `mc-scripts start` may read (it sets NODE_ENV to `development`; build, compile-html and
+ * config:sync set `production`). Anything here ends up in the app's runtime configuration, so a
+ * credential that must never ship is read for development alone, whatever the environment holds.
+ */
+const developmentEnv = (name) =>
+  process.env.NODE_ENV === 'development' ? optionalEnv(name) : '';
+
+/**
  * @type {import('@commercetools-frontend/application-config').ConfigOptionsForCustomApplication}
  */
 const config = {
@@ -35,6 +43,12 @@ const config = {
     // comments, workflows, page-workflow, preview-settings, data-sources, sections, components,
     // instances, reset. Empty → none. Lets the migration roll out (and back) one family at a time.
     pageBuilderServiceHooks: optionalEnv('PAGE_BUILDER_SERVICE_HOOKS'),
+    // Local development only (`yarn start`): the service's PB_DEV_TOKEN. The MC API gateway cannot
+    // forward to a service on localhost, so the dev server calls it directly with this token instead.
+    // Empty in every other mode, so it can never end up in a deployed build.
+    pageBuilderServiceDevToken: developmentEnv(
+      'PAGE_BUILDER_SERVICE_DEV_TOKEN'
+    ),
   },
   oAuthScopes: {
     view: ['view_products'],
@@ -47,12 +61,14 @@ const config = {
         'https://*.commercetools.com',
         'https://*.netlify.app',
         'http://localhost:3000',
+        'http://localhost:8080',
       ],
       'connect-src': [
         "'self'",
         'https://*.commercetools.com',
         'https://*.netlify.app',
         'http://localhost:3000',
+        'http://localhost:8080',
       ],
       // The media picker renders `<img>` for each library thumbnail and for the selected value.
       // Uploads are stored in the service's Google Cloud Storage bucket and read from there

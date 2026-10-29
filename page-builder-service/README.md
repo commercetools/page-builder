@@ -28,7 +28,7 @@ storefront shim are generated from it (`npm run generate:api`; a test fails if t
 |---|---|---|
 | `GET /v1/render` | storefront shim (server side) | `X-PB-Render-Key` + origin allowlist (`X-PB-Origin`), `X-PB-Wire-Version` |
 | `GET/POST /v1/catalog`, `POST /v1/catalog/{validate,publish}` | host CI | `Authorization: Bearer <PB_ADMIN_SECRET>` |
-| `/v1/admin/objects/…` | Merchant Center app | MC-user JWT forwarded by the MC API Gateway |
+| `/v1/admin/objects/…` | Merchant Center app | MC-user JWT forwarded by the MC API Gateway (local development: `PB_DEV_TOKEN`) |
 | `GET/POST /v1/admin/media` | Merchant Center app | same MC-user JWT; `501` until `PB_MEDIA_BUCKET` is set |
 | `GET /status` (alias `/healthz`) | Connect liveness | none |
 
@@ -125,6 +125,7 @@ time and injects `CTP_PROJECT_KEY`, `CTP_CLIENT_ID`, `CTP_CLIENT_SECRET`, `CTP_S
 | `PB_RENDER_KEY` | secured | yes | | key the storefront shim presents on render calls |
 | `PB_PREVIEW_TOKEN` | secured | no | | unlocks draft/preview and edit mode; unset disables previews |
 | `PB_ADMIN_SECRET` | secured | yes | | bearer secret for catalog validate, push and publish from CI |
+| `PB_DEV_TOKEN` | local only | no | | lets the Merchant Center app's dev server call the admin API directly, see [Local development with the Merchant Center app](#local-development-with-the-merchant-center-app). Not in `connect.yaml`; startup fails if it is set in production |
 | `PB_MEDIA_SERVICE_ACCOUNT_KEY_B64` | secured | no | | service-account JSON key for `PB_MEDIA_BUCKET`, base64 on one line (Storage Object Creator + Viewer) |
 
 Production start-up fails fast, listing every problem, when a required value is missing. In local
@@ -143,6 +144,11 @@ The API client needs, and `connect.yaml` requests, only:
 | `view_stores` | resolving a store key to its id |
 
 There is no `manage_project` and no write access to anything but custom objects.
+
+That is what `connect.yaml` requests, not something the service assumes. The service asks commercetools for exactly
+`CTP_SCOPE` (which Connect injects from those scopes) and, when it is unset, for no scope at all, so the token carries
+whatever scopes the API client itself has. Locally, any API client that covers the table works as it is, including one
+that only has `manage_project:<project-key>`. A `CTP_SCOPE` the client cannot grant fails with "Permissions exceeded".
 
 ### Fail-open or fail-closed
 
@@ -182,6 +188,28 @@ npm run typecheck && npm run lint:api
 `dev:fake` seeds a small shop (categories, products, product types, a store `gap`) and content, with preview
 token `dev-preview` and admin secret `dev-admin`. The fake validates the *shape* of the service's own
 calls but is not commercetools: it does not prove a Product Search query is accepted by the real API.
+
+## Local development with the Merchant Center app
+
+In the Merchant Center the app reaches this service through the gateway's `/proxy/forward-to`. The gateway runs
+in the cloud, so it cannot forward to a service on `localhost`. For local development only, the app's dev server
+(`yarn start` in `page-editor`) can call the service directly with `fetch` instead:
+
+1. Pick a token (any non-empty value; a random one such as `openssl rand -hex 16` is safer on a shared network) and start the service with it, and with the
+   dev server's origin as an editor origin (`npm run dev:fake` already does both, with the token `dev-editor-token`):
+
+   ```sh
+   PB_DEV_TOKEN=<token> PB_EDITOR_ORIGINS=http://localhost:3001 npm run dev
+   ```
+
+2. In `page-editor/.env.local` (git-ignored) set `PAGE_BUILDER_SERVICE_URL=http://localhost:8080/service` and
+   `PAGE_BUILDER_SERVICE_DEV_TOKEN=<the same token>`, then run `yarn start`.
+
+With the token the service accepts `Authorization: Bearer <token>` on `/v1/admin/*` as the user `local-dev` of its
+own project (audit logs say so), and answers CORS preflights for the `PB_EDITOR_ORIGINS` origins on that surface
+only. A real Merchant Center JWT is still accepted beside it. The token is never read in production: the service
+fails to start with `PB_DEV_TOKEN` set when `NODE_ENV=production` (`npm start`, the Connect image), it is not a
+`connect.yaml` setting, and the editor only sends it from a development build.
 
 ## Verify against a real project
 

@@ -82,7 +82,7 @@ describe('loadConfig', () => {
     });
   });
 
-  it('builds CT config, trimming URL slashes and defaulting scopes', () => {
+  it('builds CT config, trimming URL slashes and assuming no scopes', () => {
     const c = loadConfig(CT);
     expect(c.ct).toEqual({
       projectKey: 'us-store',
@@ -90,13 +90,34 @@ describe('loadConfig', () => {
       clientSecret: 'secret',
       authUrl: 'https://auth.europe-west1.gcp.commercetools.com',
       apiUrl: 'https://api.europe-west1.gcp.commercetools.com',
-      scopes:
-        'manage_key_value_documents:us-store view_products:us-store view_categories:us-store view_stores:us-store',
+      scopes: undefined,
     });
   });
 
-  it('honours explicit CT scopes', () => {
+  it('honours explicit CT scopes, and treats a blank value as unset', () => {
     expect(loadConfig({ ...CT, CTP_SCOPES: 'a b' }).ct?.scopes).toBe('a b');
+    expect(loadConfig({ ...CT, CTP_SCOPE: ' manage_project:us-store ' }).ct?.scopes).toBe('manage_project:us-store');
+    expect(loadConfig({ ...CT, CTP_SCOPE: '   ' }).ct?.scopes).toBeUndefined();
+  });
+
+  describe('CTP_SCOPE', () => {
+    it('must be for the project of CTP_PROJECT_KEY, however it got there', () => {
+      expect(problems({ ...CT, CTP_SCOPE: 'manage_project:another-store' })).toEqual([
+        'CTP_SCOPE: "manage_project:another-store" is for another project than CTP_PROJECT_KEY "us-store"; use the scopes of this project\'s API client',
+      ]);
+    });
+
+    it('names every scope that is for another project, and only those', () => {
+      const list = problems({ ...CT, CTP_SCOPE: 'view_products:us-store view_stores:elsewhere manage_orders:other:store-a' });
+      expect(list).toHaveLength(2);
+      expect(list[0]).toContain('"view_stores:elsewhere"');
+      expect(list[1]).toContain('"manage_orders:other:store-a"');
+    });
+
+    it('accepts store-specific scopes of its own project, and a scope with no project at all', () => {
+      expect(problems({ ...CT, CTP_SCOPE: 'view_products:us-store manage_orders:us-store:store-a' })).toEqual([]);
+      expect(problems({ ...CT, CTP_SCOPE: 'manage_project' })).toEqual([]);
+    });
   });
 
   it('rejects partially set CT credentials even in development', () => {
@@ -188,6 +209,34 @@ describe('loadConfig', () => {
     it('has no PB_MC_AUDIENCE setting', () => {
       expect(loadConfig({ PB_MC_ISSUER: 'gcp-eu', CONNECT_SERVICE_URL: 'https://svc.test', PB_MC_AUDIENCE: 'https://other.test' }).mc?.audience).toBe('https://svc.test');
     });
+  });
+});
+
+describe('local development token', () => {
+  const token = 'dev-editor-token-1234';
+  const origins = { PB_EDITOR_ORIGINS: 'http://localhost:3001' };
+
+  it('is off unless configured', () => {
+    expect(loadConfig({}).devToken).toBeUndefined();
+    expect(loadConfig({ PB_DEV_TOKEN: '  ' }).devToken).toBeUndefined();
+  });
+
+  it('is accepted outside production, with the editor origin it needs', () => {
+    expect(loadConfig({ PB_DEV_TOKEN: ` ${token} `, ...origins }).devToken).toBe(token);
+  });
+
+  it('is refused in production, without ever echoing the value', () => {
+    const list = problems({ ...PROD, PB_DEV_TOKEN: token, ...origins });
+    expect(list).toEqual(['PB_DEV_TOKEN must not be set in production: it replaces Merchant Center sign-in on the admin API']);
+    expect(list.join()).not.toContain(token);
+  });
+
+  it('has no minimum length', () => {
+    expect(loadConfig({ PB_DEV_TOKEN: 'dev', ...origins }).devToken).toBe('dev');
+  });
+
+  it('needs the origin of the app dev server, since nothing else is allowed to call', () => {
+    expect(problems({ PB_DEV_TOKEN: token })).toEqual([expect.stringContaining('requires PB_EDITOR_ORIGINS')]);
   });
 });
 

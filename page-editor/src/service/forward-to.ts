@@ -15,17 +15,14 @@ import {
   executeHttpClientRequest,
 } from '@commercetools-frontend/application-shell';
 import type { ServiceConfig } from './config';
+import { encodeBody, readJson, serviceUrl } from './service-http';
 import type { ServiceRequest } from './service-link';
 
 export const createForwardRequest =
   (config: Pick<ServiceConfig, 'origin' | 'basePath'>): ServiceRequest =>
   ({ method, path, query, body }) => {
-    const url = new URL(`${config.basePath}${path}`, config.origin);
-    for (const [name, value] of Object.entries(query ?? {})) {
-      if (value !== undefined) url.searchParams.set(name, String(value));
-    }
-
-    const isMultipart = body instanceof FormData;
+    const url = serviceUrl(config, path, query);
+    const encoded = encodeBody(body);
 
     return executeHttpClientRequest(
       async (options: {
@@ -35,23 +32,11 @@ export const createForwardRequest =
         const res = await fetch(buildApiUrl('/proxy/forward-to'), {
           method,
           credentials: options.credentials,
-          headers: {
-            ...options.headers,
-            ...(body === undefined || isMultipart
-              ? {}
-              : { 'content-type': 'application/json' }),
-          },
-          body: body === undefined || isMultipart ? body : JSON.stringify(body),
+          headers: { ...options.headers, ...encoded.headers },
+          body: encoded.body,
         });
-        const text = await res.text();
-        let json: unknown;
-        try {
-          json = text ? JSON.parse(text) : undefined;
-        } catch {
-          json = undefined;
-        }
         return {
-          data: { status: res.status, json },
+          data: { status: res.status, json: await readJson(res) },
           statusCode: res.status,
           getHeader: (name: string) => res.headers.get(name),
         };

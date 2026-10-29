@@ -310,6 +310,13 @@ The app's page-builder data hooks (pages, components, comments, workflows, previ
 
 The service must be configured with `PB_MC_ISSUER` (this project's Merchant Center API Gateway, e.g. `gcp-eu`) and, for its audience, the `CONNECT_SERVICE_URL` that Connect provides (its own public URL). Calls go through `/proxy/forward-to`; the service verifies the forwarded JWT, restricts access to the page-builder containers, keeps the host catalog read-only, and audit-logs each write with the acting user. The product/category pickers keep using the Merchant Center gateway. Roll out one family at a time (they are independent) and roll back by editing the list. Run `yarn test:service` in `page-editor/` to run the whole suite through the service transport.
 
+**Local development.** The gateway runs in the cloud and cannot forward to a service on `localhost`, so with `PAGE_BUILDER_SERVICE_URL`
+pointing there, `yarn start` can call the service directly with a plain `fetch` instead. Set the same token as
+`PB_DEV_TOKEN` on the service (with `PB_EDITOR_ORIGINS=http://localhost:3001`) and as `PAGE_BUILDER_SERVICE_DEV_TOKEN` in
+`page-editor/.env.local`, then restart `yarn start`. It is development-only on both sides: the app reads the token only under
+`yarn start` and a production bundle does not contain the direct path, and the service refuses to start with `PB_DEV_TOKEN` set when
+`NODE_ENV=production`. Details in the [service README](./page-builder-service/README.md#local-development-with-the-merchant-center-app).
+
 ### Images and videos
 
 `kind: 'image'` and `kind: 'video'` fields upload to, and pick from, a Google Cloud Storage bucket owned by the **service**. The

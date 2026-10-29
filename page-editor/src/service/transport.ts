@@ -33,6 +33,7 @@ import {
   type ServiceConfig,
   type ServiceFeature,
 } from './config';
+import { createDirectRequest } from './direct';
 import { createForwardRequest } from './forward-to';
 import { createServiceLink, type ServiceRequest } from './service-link';
 
@@ -49,25 +50,34 @@ export function setServiceRequestForTests(
   clients.clear();
 }
 
-/** How a call reaches the service: through the MC gateway, or the in-process stand-in under test. */
+/**
+ * How a call reaches the service: through the MC gateway, the in-process stand-in under test, or,
+ * in a development build with a dev token configured, straight to the service.
+ *
+ * The gateway cannot forward to a service on localhost, so local development calls it directly.
+ * `process.env.NODE_ENV` is replaced when the app is built, so in a production bundle the direct
+ * branch is dead code: a token in the environment changes nothing there.
+ */
 export function serviceRequestFor(
-  config: Pick<ServiceConfig, 'origin' | 'basePath'>
+  config: Pick<ServiceConfig, 'origin' | 'basePath' | 'devToken'>
 ): ServiceRequest {
-  return requestOverride ?? createForwardRequest(config);
+  if (requestOverride) return requestOverride;
+  return process.env.NODE_ENV === 'development' && config.devToken
+    ? createDirectRequest(config, config.devToken)
+    : createForwardRequest(config);
 }
 
 export function serviceClientFor(
-  config: Pick<ServiceConfig, 'origin' | 'basePath'>,
+  config: Pick<ServiceConfig, 'origin' | 'basePath' | 'devToken'>,
   projectKey: string,
   request?: ServiceRequest
 ) {
   const id = `${config.origin}${config.basePath}|${projectKey}`;
   let client = clients.get(id);
-  request ??= requestOverride ?? undefined;
   if (!client) {
     client = new ApolloClient({
       cache: new InMemoryCache(),
-      link: createServiceLink(request ?? createForwardRequest(config)),
+      link: createServiceLink(request ?? serviceRequestFor(config)),
       // Reads must reflect writes from other tabs and users; the service never serves stale data.
       defaultOptions: { watchQuery: { nextFetchPolicy: undefined } },
     });

@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import PreviewSettingsDialog from './preview-settings-dialog';
 import type { PreviewSettings } from '../types';
 import {
+  act,
   renderWithProviders,
   screen,
   waitFor,
@@ -131,5 +133,99 @@ describe('PreviewSettingsDialog', () => {
     expect(
       within(dialog).getByRole('button', { name: 'Cancel' })
     ).toBeDisabled();
+  });
+
+  describe('the Local environment, which is per-browser', () => {
+    const LOCAL_KEY = 'pb:preview:local';
+
+    const typeLocalUrl = async (
+      user: ReturnType<typeof setup>['user'],
+      url: string
+    ) => {
+      const dialog = await screen.findByRole('dialog');
+      await user.click(within(dialog).getByRole('button', { name: 'Local' }));
+      await user.type(
+        await within(dialog).findByPlaceholderText('http://localhost:3000'),
+        url
+      );
+      await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    };
+
+    it('is stored in this browser once the save succeeds', async () => {
+      const { user, onSave } = setup();
+      await typeLocalUrl(user, 'http://localhost:4000');
+
+      await waitFor(() => expect(onSave).toHaveBeenCalled());
+      await waitFor(() =>
+        expect(JSON.parse(window.localStorage.getItem(LOCAL_KEY)!)).toEqual(
+          expect.objectContaining({ baseUrl: 'http://localhost:4000' })
+        )
+      );
+    });
+
+    it('is left alone when the save fails, as the rest of the form is', async () => {
+      const onSave = jest.fn().mockRejectedValue(new Error('nope'));
+      const { user, onOpenChange } = setup({ onSave });
+      await typeLocalUrl(user, 'http://localhost:4000');
+
+      await waitFor(() => expect(onSave).toHaveBeenCalled());
+      expect(window.localStorage.getItem(LOCAL_KEY)).toBeNull();
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('when the settings change while it is open', () => {
+    // The open modal makes everything outside it inaccessible, so the change is
+    // pushed in through a captured setter rather than a button.
+    let loadSettings!: () => void;
+    const Refreshing = () => {
+      const [settings, setSettings] = useState<PreviewSettings | null>(null);
+      loadSettings = () =>
+        setSettings(
+          buildPreviewSettings({
+            environments: {
+              production: { baseUrl: 'https://loaded.test' },
+              staging: { baseUrl: '' },
+            },
+          })
+        );
+      return (
+        <PreviewSettingsDialog
+          isOpen
+          onOpenChange={jest.fn()}
+          settings={settings}
+          saving={false}
+          onSave={async () => undefined}
+        />
+      );
+    };
+
+    it('fills in an untouched form when the saved settings arrive late', async () => {
+      renderWithProviders(<Refreshing />);
+      await screen.findByRole('dialog');
+      expect(screen.queryByDisplayValue('https://loaded.test')).toBeNull();
+
+      act(() => loadSettings());
+
+      expect(
+        await screen.findByDisplayValue('https://loaded.test')
+      ).toBeInTheDocument();
+    });
+
+    it('does not replace what the user has already typed', async () => {
+      const { user } = renderWithProviders(<Refreshing />);
+      const dialog = await screen.findByRole('dialog');
+      const [baseUrl] = within(dialog).getAllByPlaceholderText(
+        'https://store.example.com'
+      );
+      await user.type(baseUrl, 'https://typed.test');
+
+      act(() => loadSettings());
+
+      expect(
+        await screen.findByDisplayValue('https://typed.test')
+      ).toBeInTheDocument();
+      expect(screen.queryByDisplayValue('https://loaded.test')).toBeNull();
+    });
   });
 });

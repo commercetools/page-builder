@@ -82,6 +82,25 @@ describe('parseServiceEndpoint', () => {
     });
   });
 
+  it('carries the development token when one is configured, and nothing otherwise', () => {
+    const url = { pageBuilderServiceUrl: 'https://svc.example.com/service' };
+    expect(
+      parseServiceEndpoint({ ...url, pageBuilderServiceDevToken: ' tok ' })
+    ).toEqual({
+      origin: 'https://svc.example.com',
+      basePath: '/service',
+      devToken: 'tok',
+    });
+    for (const none of ['', '  ', undefined, 7]) {
+      expect(
+        parseServiceEndpoint({ ...url, pageBuilderServiceDevToken: none })
+      ).not.toHaveProperty('devToken');
+    }
+    expect(
+      parseServiceConfig(env({ pageBuilderServiceDevToken: 'tok' }))
+    ).toMatchObject({ devToken: 'tok' });
+  });
+
   it('is what parseServiceConfig builds on', () => {
     expect(
       parseServiceConfig(env({ pageBuilderServiceHooks: 'pages' }))

@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useIntl } from 'react-intl';
+import { useFormik, type FormikErrors } from 'formik';
 import {
+  Alert,
   Box,
   Button,
   CollapsibleMotion,
@@ -18,13 +20,23 @@ import { DEFAULT_PREVIEW_SETTINGS } from '../../../hooks/use-preview-settings-co
 import { useLocalPreviewUrl } from './use-preview-environment';
 import messages from '../messages';
 import { PreviewSettingsRoutes } from './preview-settings-routes';
-import type { PreviewSettingsDraft } from './preview-settings-draft';
+import type {
+  PreviewSettingsBind,
+  PreviewSettingsDraft,
+} from './preview-settings-draft';
 
 type PreviewSettingsDialogProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   settings: PreviewSettings | null;
+  /**
+   * Set (to the reason, possibly empty) when the saved settings could not be
+   * read. `settings` is then null for want of data, not because nothing is
+   * configured, so saving the defaults would overwrite what is really stored.
+   */
+  loadError?: string | null;
   saving: boolean;
+  /** Rejects when the save fails; the dialog then stays open with the edits intact. */
   onSave: (next: PreviewSettings) => Promise<void>;
 };
 
@@ -123,24 +135,71 @@ const toSettings = (
   };
 };
 
+/** Whether at least one environment (production, staging or local) has a base URL. */
+const hasAnyBaseUrl = (draft: PreviewSettingsDraft): boolean =>
+  [draft.prodBaseUrl, draft.stagingBaseUrl, draft.localBaseUrl].some((s) =>
+    s.trim()
+  );
+
+/**
+ * Formik errors are display strings, but nothing renders this one: the form
+ * signals it by disabling Save and marking the production URL as required.
+ */
+const MISSING_BASE_URL: FormikErrors<PreviewSettingsDraft> = {
+  prodBaseUrl: 'A base URL is required for at least one environment.',
+};
+
 const PreviewSettingsDialog = ({
   isOpen,
   onOpenChange,
   settings,
+  loadError = null,
   saving,
   onSave,
 }: PreviewSettingsDialogProps) => {
   const intl = useIntl();
   const base = settings ?? DEFAULT_PREVIEW_SETTINGS;
   const [localUrl, setLocalUrl] = useLocalPreviewUrl();
-  const [draft, setDraft] = useState<PreviewSettingsDraft>(() =>
-    fromSettings(base, localUrl)
-  );
 
-  // Re-seed the form whenever the dialog is (re)opened.
+  const form = useFormik<PreviewSettingsDraft>({
+    initialValues: fromSettings(base, localUrl),
+    // Validity is derived synchronously from the values (`hasBaseUrl` below),
+    // which is what the Save button and the required marker read, so Formik
+    // only needs to re-check it as the final guard on submit.
+    validate: (values) => (hasAnyBaseUrl(values) ? {} : MISSING_BASE_URL),
+    validateOnChange: false,
+    validateOnBlur: false,
+    onSubmit: async (values) => {
+      try {
+        await onSave(toSettings(values, base));
+        // Local env is per-browser — persist it to localStorage, not the CO.
+        // Only once the shared settings are saved, so a failed save changes
+        // nothing.
+        setLocalUrl({
+          baseUrl: values.localBaseUrl.trim(),
+          token: values.localToken.trim() || undefined,
+        });
+        onOpenChange(false);
+      } catch {
+        // `onSave` has already told the user why (the parent toasts); keep the
+        // dialog open so the edits survive for a retry.
+      }
+    },
+  });
+  const { values, dirty, resetForm } = form;
+
+  // Seed the form from the saved settings whenever the dialog is (re)opened.
+  // While it stays open, a fresh `settings` (the first load finishing late, a
+  // refetch) re-seeds only a pristine form: it must never replace what the
+  // user is in the middle of typing.
+  const wasOpen = useRef(false);
   useEffect(() => {
-    if (isOpen) {
-      setDraft(fromSettings(settings ?? DEFAULT_PREVIEW_SETTINGS, localUrl));
+    const opening = isOpen && !wasOpen.current;
+    wasOpen.current = isOpen;
+    if (isOpen && (opening || !dirty)) {
+      resetForm({
+        values: fromSettings(settings ?? DEFAULT_PREVIEW_SETTINGS, localUrl),
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, settings]);
@@ -148,30 +207,18 @@ const PreviewSettingsDialog = ({
   const set = <K extends keyof PreviewSettingsDraft>(
     key: K,
     value: PreviewSettingsDraft[K]
-  ) => setDraft((d) => ({ ...d, [key]: value }));
+  ) => {
+    void form.setFieldValue(key, value);
+  };
+  const bind: PreviewSettingsBind = (key) => ({
+    value: values[key],
+    onChange: (value) => set(key, value),
+  });
 
   const label = (key: keyof typeof messages) =>
     intl.formatMessage(messages[key]);
 
-  const anyBaseUrl = [
-    draft.prodBaseUrl,
-    draft.stagingBaseUrl,
-    draft.localBaseUrl,
-  ].some((s) => s.trim());
-
-  const handleSave = async () => {
-    try {
-      // Local env is per-browser — persist it to localStorage, not the CO.
-      setLocalUrl({
-        baseUrl: draft.localBaseUrl.trim(),
-        token: draft.localToken.trim() || undefined,
-      });
-      await onSave(toSettings(draft, base));
-      onOpenChange(false);
-    } catch {
-      // Parent surfaces the error toast; keep the dialog open to retry.
-    }
-  };
+  const hasBaseUrl = hasAnyBaseUrl(values);
 
   const renderEnvGroup = (opts: {
     labelKey: keyof typeof messages;
@@ -203,8 +250,7 @@ const PreviewSettingsDialog = ({
             <FormField.Label>{label('previewSettingsBaseUrl')}</FormField.Label>
             <FormField.Input>
               <TextInput
-                value={draft[opts.baseUrlKey]}
-                onChange={(v) => set(opts.baseUrlKey, v)}
+                {...bind(opts.baseUrlKey)}
                 placeholder={opts.baseUrlPlaceholder}
               />
             </FormField.Input>
@@ -215,10 +261,7 @@ const PreviewSettingsDialog = ({
           <FormField.Root>
             <FormField.Label>{label('previewSettingsToken')}</FormField.Label>
             <FormField.Input>
-              <TextInput
-                value={draft[opts.tokenKey]}
-                onChange={(v) => set(opts.tokenKey, v)}
-              />
+              <TextInput {...bind(opts.tokenKey)} />
             </FormField.Input>
           </FormField.Root>
         </Flex>
@@ -240,9 +283,17 @@ const PreviewSettingsDialog = ({
         </Dialog.Header>
         <Dialog.Body>
           <Flex direction="column" gap={500}>
+            {loadError !== null && (
+              <Alert.Root colorPalette="critical">
+                <Alert.Title>{label('previewSettingsLoadFailed')}</Alert.Title>
+                {loadError && (
+                  <Alert.Description>{loadError}</Alert.Description>
+                )}
+              </Alert.Root>
+            )}
             <Flex direction="column" gap={100}>
               <Switch
-                isSelected={draft.enabled}
+                isSelected={values.enabled}
                 onChange={(v) => set('enabled', v)}
               >
                 {label('previewSettingsEnabled')}
@@ -265,7 +316,7 @@ const PreviewSettingsDialog = ({
                   baseUrlKey: 'prodBaseUrl',
                   tokenKey: 'prodToken',
                   baseUrlPlaceholder: 'https://store.example.com',
-                  isRequired: !anyBaseUrl,
+                  isRequired: !hasBaseUrl,
                   defaultExpanded: true,
                 })}
                 {renderEnvGroup({
@@ -273,7 +324,7 @@ const PreviewSettingsDialog = ({
                   baseUrlKey: 'stagingBaseUrl',
                   tokenKey: 'stagingToken',
                   baseUrlPlaceholder: 'https://staging.example.com',
-                  defaultExpanded: Boolean(draft.stagingBaseUrl),
+                  defaultExpanded: Boolean(values.stagingBaseUrl),
                 })}
                 {renderEnvGroup({
                   labelKey: 'previewEnvLocal',
@@ -281,7 +332,7 @@ const PreviewSettingsDialog = ({
                   tokenKey: 'localToken',
                   baseUrlPlaceholder: 'http://localhost:3000',
                   description: label('previewSettingsLocalHelp'),
-                  defaultExpanded: Boolean(draft.localBaseUrl),
+                  defaultExpanded: Boolean(values.localBaseUrl),
                 })}
               </Flex>
             </Flex>
@@ -292,8 +343,7 @@ const PreviewSettingsDialog = ({
               </FormField.Label>
               <FormField.Input>
                 <TextInput
-                  value={draft.localesText}
-                  onChange={(v) => set('localesText', v)}
+                  {...bind('localesText')}
                   placeholder="en-us, en-gb, de-de"
                 />
               </FormField.Input>
@@ -307,15 +357,11 @@ const PreviewSettingsDialog = ({
                 {label('previewSettingsDefaultLocale')}
               </FormField.Label>
               <FormField.Input>
-                <TextInput
-                  value={draft.defaultLocale}
-                  onChange={(v) => set('defaultLocale', v)}
-                  placeholder="en-us"
-                />
+                <TextInput {...bind('defaultLocale')} placeholder="en-us" />
               </FormField.Input>
             </FormField.Root>
 
-            <PreviewSettingsRoutes draft={draft} set={set} label={label} />
+            <PreviewSettingsRoutes bind={bind} label={label} />
 
             <Flex direction="column" gap={300}>
               <Box as="span" fontSize={350} fontWeight={600} color="neutral.12">
@@ -326,10 +372,7 @@ const PreviewSettingsDialog = ({
                   {label('previewSettingsPdpSku')}
                 </FormField.Label>
                 <FormField.Input>
-                  <TextInput
-                    value={draft.pdpSku}
-                    onChange={(v) => set('pdpSku', v)}
-                  />
+                  <TextInput {...bind('pdpSku')} />
                 </FormField.Input>
               </FormField.Root>
               <FormField.Root>
@@ -337,10 +380,7 @@ const PreviewSettingsDialog = ({
                   {label('previewSettingsPdpSlug')}
                 </FormField.Label>
                 <FormField.Input>
-                  <TextInput
-                    value={draft.pdpSlug}
-                    onChange={(v) => set('pdpSlug', v)}
-                  />
+                  <TextInput {...bind('pdpSlug')} />
                 </FormField.Input>
               </FormField.Root>
             </Flex>
@@ -351,8 +391,7 @@ const PreviewSettingsDialog = ({
               </FormField.Label>
               <FormField.Input>
                 <MultilineTextInput
-                  value={draft.varsText}
-                  onChange={(v) => set('varsText', v)}
+                  {...bind('varsText')}
                   placeholder="brand=gap"
                 />
               </FormField.Input>
@@ -373,8 +412,10 @@ const PreviewSettingsDialog = ({
           <Button
             variant="solid"
             colorPalette="primary"
-            onPress={handleSave}
-            isDisabled={saving || !anyBaseUrl}
+            onPress={() => void form.submitForm()}
+            isDisabled={
+              saving || form.isSubmitting || !hasBaseUrl || loadError !== null
+            }
           >
             {saving && (
               <LoadingSpinner

@@ -9,10 +9,15 @@
  *
  * The app must forward with the `forward-url-origin` audience policy so the audience is the
  * service origin and does not depend on the request path (Connect prefixes the app endpoint).
+ *
+ * Local development has one more way in: `PB_DEV_TOKEN`. The gateway runs in the cloud and cannot
+ * forward to a service on localhost, so the app's dev server calls the service directly with that
+ * token instead (see `devAuth`). Configuration refuses it in production.
  */
 
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from 'jose';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { safeEqual } from './auth.js';
 import type { McConfig } from './config.js';
 
 export interface Actor {
@@ -31,6 +36,10 @@ export function createRemoteKeys(issuer: string): JWTVerifyGetKey {
   return createRemoteJWKSet(new URL('/.well-known/jwks.json', issuer));
 }
 
+function bearerOf(req: FastifyRequest): string | undefined {
+  return /^Bearer (.+)$/.exec(typeof req.headers.authorization === 'string' ? req.headers.authorization : '')?.[1];
+}
+
 function deny(reply: FastifyReply, code: string, message: string): FastifyReply {
   return reply.code(401).send({ error: { code, message } });
 }
@@ -41,12 +50,12 @@ export function mcAuth(
   keys: JWTVerifyGetKey
 ): (req: FastifyRequest, reply: FastifyReply) => Promise<FastifyReply | void> {
   return async (req, reply) => {
-    const match = /^Bearer (.+)$/.exec(typeof req.headers.authorization === 'string' ? req.headers.authorization : '');
-    if (!match) return deny(reply, 'missing_token', 'Missing Merchant Center token');
+    const token = bearerOf(req);
+    if (!token) return deny(reply, 'missing_token', 'Missing Merchant Center token');
 
     let payload;
     try {
-      ({ payload } = await jwtVerify(match[1]!, keys, {
+      ({ payload } = await jwtVerify(token, keys, {
         algorithms: ['RS256'],
         issuer: mc.issuer,
         audience: mc.audience,
@@ -65,4 +74,45 @@ export function mcAuth(
     }
     req.actor = { userId: payload.sub, projectKey };
   };
+}
+
+/** The identity recorded in audit logs for a call made with `PB_DEV_TOKEN`. */
+export const DEV_USER_ID = 'local-dev';
+
+export type Authenticate = (req: FastifyRequest, reply: FastifyReply) => Promise<FastifyReply | void>;
+
+/** Accepts exactly the configured development token, acting as the service's own project. */
+export function devAuth(token: string, projectKey: string): Authenticate {
+  return async (req, reply) => {
+    const presented = bearerOf(req);
+    if (!presented) return deny(reply, 'missing_token', 'Missing development token');
+    if (!safeEqual(presented, token)) return deny(reply, 'invalid_token', 'Invalid development token');
+    req.actor = { userId: DEV_USER_ID, projectKey };
+  };
+}
+
+export interface EditorAuthOptions {
+  projectKey: string;
+  /** Verifies gateway JWTs; null when `PB_MC_ISSUER` is not configured. */
+  mc: { config: McConfig; keys: JWTVerifyGetKey } | null;
+  /** `PB_DEV_TOKEN`; undefined outside local development. */
+  devToken: string | undefined;
+}
+
+/**
+ * How a request to the admin surface proves it comes from the Merchant Center app: a gateway JWT,
+ * or, in local development, the dev token. `null` when neither is configured (the surface is closed).
+ */
+export function editorAuth({ projectKey, mc, devToken }: EditorAuthOptions): Authenticate | null {
+  const jwt = mc ? mcAuth(mc.config, projectKey, mc.keys) : null;
+  const dev = devToken ? devAuth(devToken, projectKey) : null;
+  if (jwt && dev) {
+    // A signed JWT is never equal to the token, so the token check decides first and the JWT is
+    // checked for everything else; the real sign-in path keeps working while developing.
+    return async (req, reply) => {
+      const presented = bearerOf(req);
+      return presented !== undefined && safeEqual(presented, devToken!) ? dev(req, reply) : jwt(req, reply);
+    };
+  }
+  return jwt ?? dev;
 }

@@ -15,7 +15,11 @@ export interface CtConfig {
   clientSecret: string;
   authUrl: string;
   apiUrl: string;
-  scopes: string;
+  /**
+   * `CTP_SCOPE`, passed to the token endpoint as it is. Unset sends no scope, so commercetools issues
+   * the token with whatever scopes the API client itself has: the service never assumes any.
+   */
+  scopes: string | undefined;
 }
 
 export interface ServiceConfig {
@@ -38,6 +42,11 @@ export interface ServiceConfig {
   adminSecret: string | undefined;
   /** Merchant Center JWT verification for the admin API; null disables `/v1/admin/*`. */
   mc: McConfig | null;
+  /**
+   * `PB_DEV_TOKEN` — local development only. Lets the Merchant Center app dev server call the admin
+   * API directly (the gateway's `forward-to` cannot reach a service on localhost). Never set in production.
+   */
+  devToken: string | undefined;
   /** Google Cloud Storage for uploaded media (`PB_MEDIA_*`); null leaves the media routes answering 501. */
   media: MediaConfig | null;
   /** Seconds to cache commercetools reads for; 0 disables the cache. */
@@ -91,12 +100,6 @@ function withConnectAliases(
     CTP_SCOPES: env.CTP_SCOPES || env.CTP_SCOPE,
   };
 }
-
-/** Custom objects (read + write) plus the commercetools reads the resolvers perform. */
-const defaultScopes = (projectKey: string): string =>
-  ['manage_key_value_documents', 'view_products', 'view_categories', 'view_stores']
-    .map((scope) => `${scope}:${projectKey}`)
-    .join(' ');
 
 const LOG_LEVELS = ['debug', 'info', 'warn', 'error', 'silent'] as const;
 
@@ -171,16 +174,31 @@ function parseFacetLimit(env: Env, problems: string[]): number {
   return facetLimit;
 }
 
+/**
+ * A scope names its project: `<scope>:<project-key>`, optionally followed by a store key. One for any
+ * other project can never be granted to this client, and commercetools answers it with an opaque
+ * "Permissions exceeded" on the first request; say so at start-up instead.
+ */
+function scopesForOtherProjects(scopes: string | undefined, projectKey: string): string[] {
+  return (scopes ?? '')
+    .split(/\s+/)
+    .filter((scope) => scope.split(':').length > 1 && scope.split(':')[1] !== projectKey);
+}
+
 function loadCt(env: Env, production: boolean, problems: string[]): CtConfig | null {
   const missingCt = CT_KEYS.filter((k) => !env[k]);
   if (missingCt.length === 0) {
+    const scopes = env.CTP_SCOPES?.trim() || undefined;
+    for (const scope of scopesForOtherProjects(scopes, env.CTP_PROJECT_KEY!)) {
+      problems.push(`CTP_SCOPE: "${scope}" is for another project than CTP_PROJECT_KEY "${env.CTP_PROJECT_KEY}"; use the scopes of this project's API client`);
+    }
     return {
       projectKey: env.CTP_PROJECT_KEY!,
       clientId: env.CTP_CLIENT_ID!,
       clientSecret: env.CTP_CLIENT_SECRET!,
       authUrl: trimSlash(env.CTP_AUTH_URL!),
       apiUrl: trimSlash(env.CTP_API_URL!),
-      scopes: env.CTP_SCOPES || defaultScopes(env.CTP_PROJECT_KEY!),
+      scopes,
     };
   }
   if (production || missingCt.length < CT_KEYS.length) {
@@ -217,6 +235,7 @@ export function loadConfig(rawEnv: Record<string, string | undefined> = process.
   const media = loadMediaConfig(env, problems);
   const renderKey = env.PB_RENDER_KEY || undefined;
   const adminSecret = env.PB_ADMIN_SECRET || undefined;
+  const devToken = loadDevToken(env, production, editorOrigins, problems);
 
   if (production) requireProductionSettings(renderKey, renderOrigins, adminSecret, problems);
 
@@ -235,11 +254,26 @@ export function loadConfig(rawEnv: Record<string, string | undefined> = process.
     editorOrigins,
     adminSecret,
     mc,
+    devToken,
     media,
     cacheTtlSeconds,
     facetAttributes: list(env.PB_FACET_ATTRIBUTES),
     facetLimit,
   };
+}
+
+function loadDevToken(env: Record<string, string | undefined>, production: boolean, editorOrigins: string[], problems: string[]): string | undefined {
+  const token = env.PB_DEV_TOKEN?.trim();
+  if (!token) return undefined;
+  // It replaces Merchant Center sign-in on the admin API, so a deployed service must never accept it.
+  if (production) {
+    problems.push('PB_DEV_TOKEN must not be set in production: it replaces Merchant Center sign-in on the admin API');
+    return undefined;
+  }
+  if (editorOrigins.length === 0) {
+    problems.push('PB_DEV_TOKEN requires PB_EDITOR_ORIGINS, the origin of the Merchant Center app dev server (e.g. http://localhost:3001)');
+  }
+  return token;
 }
 
 function loadMc(env: Record<string, string | undefined>, problems: string[]): McConfig | null {

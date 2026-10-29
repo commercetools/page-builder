@@ -5,6 +5,7 @@
  *   npm run dev:fake          # http://localhost:8080/service
  *
  * Preview token: `dev-preview`. Admin secret: `dev-admin`. Editor origin: http://localhost:3001 (the MC app dev server).
+ * Editor token: `dev-editor-token`, for the MC app dev server to call the admin API directly (see PB_DEV_TOKEN).
  */
 
 import { createDeps } from '../app.js';
@@ -23,6 +24,7 @@ const config = {
     PB_PREVIEW_TOKEN: 'dev-preview',
     PB_ADMIN_SECRET: 'dev-admin',
     PB_EDITOR_ORIGINS: 'http://localhost:3001',
+    PB_DEV_TOKEN: 'dev-editor-token',
     LOG_LEVEL: process.env.LOG_LEVEL ?? 'info',
   }),
   ct: CT_CONFIG,

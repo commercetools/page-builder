@@ -48,6 +48,7 @@ Generate the three secrets randomly and store them in the CI and platform secret
 | `INITIAL_PROJECT_KEY` | Local development project |
 | `PAGE_BUILDER_SERVICE_URL` | The service URL **including** its endpoint path. Empty keeps every hook on the MC GraphQL gateway |
 | `PAGE_BUILDER_SERVICE_HOOKS` | `all`, or a comma list of hook families |
+| `PAGE_BUILDER_SERVICE_DEV_TOKEN` | Local development only, in `page-editor/.env.local`: `yarn start` calls a service on localhost directly (the gateway's `forward-to` cannot reach it) with this token, which must equal the service's `PB_DEV_TOKEN`. Ignored by builds and refused by a production service |
 | *(none)* | Image and video fields need only `PAGE_BUILDER_SERVICE_URL`; uploads are stored by the **service** (`PB_MEDIA_*` above) |
 
 The app's content-security policy lists the origins it may frame (client preview) and call. That list lives in the app's config file, so a new client origin means a change and a redeploy. Collect all origins first.

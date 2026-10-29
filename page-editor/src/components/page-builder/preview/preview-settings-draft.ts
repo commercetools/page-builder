@@ -20,4 +20,21 @@ export type PreviewSettingsDraft = {
   varsText: string;
 };
 
+/** The draft fields that hold text, i.e. the ones a text input edits. */
+export type PreviewSettingsTextKey = {
+  [K in keyof PreviewSettingsDraft]: PreviewSettingsDraft[K] extends string
+    ? K
+    : never;
+}[keyof PreviewSettingsDraft];
+
+/**
+ * Connects a text input to its draft field in the form. Nimbus inputs report
+ * the new string rather than a change event, so Formik's `getFieldProps` does
+ * not fit them directly.
+ */
+export type PreviewSettingsBind = (key: PreviewSettingsTextKey) => {
+  value: string;
+  onChange: (value: string) => void;
+};
+
 export type PreviewSettingsLabel = (key: keyof typeof messages) => string;

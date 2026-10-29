@@ -8,6 +8,9 @@
  *
  * The per-hook list lets the migration roll out (and roll back) one hook family at a time.
  *
+ *   pageBuilderServiceDevToken  development only: call the service directly with this token instead of
+ *                            through the gateway's `forward-to` (see `direct.ts`)
+ *
  * Media uploads need only the URL, not a hook family: see `parseServiceEndpoint`.
  */
 
@@ -32,6 +35,11 @@ export type ServiceEndpoint = {
   origin: string;
   /** Path prefix of the service (its Connect endpoint), no trailing slash. */
   basePath: string;
+  /**
+   * The service's `PB_DEV_TOKEN`. Only ever used by a development build; see `serviceRequestFor`.
+   * Absent when not configured.
+   */
+  devToken?: string;
 };
 
 export type ServiceConfig = ServiceEndpoint & {
@@ -57,7 +65,12 @@ export function parseServiceEndpoint(
   } catch {
     return null;
   }
-  return { origin: url.origin, basePath: url.pathname.replace(/\/+$/, '') };
+  const devToken = text(env?.pageBuilderServiceDevToken);
+  return {
+    origin: url.origin,
+    basePath: url.pathname.replace(/\/+$/, ''),
+    ...(devToken ? { devToken } : {}),
+  };
 }
 
 export function parseServiceConfig(
