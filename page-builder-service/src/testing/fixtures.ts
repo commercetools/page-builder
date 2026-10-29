@@ -14,6 +14,7 @@ import { createFakeCt, type FakeCt } from './fake-ct.js';
 import { createDeps } from '../app.js';
 import { loadConfig, type ServiceConfig } from '../config.js';
 import { buildServer } from '../server.js';
+import type { MediaStore } from '../media/store.js';
 import {
   CATALOG_CONTAINER,
   COMPONENTS_CONTAINER,
@@ -341,7 +342,13 @@ export interface TestApp {
 
 export function testApp(
   overrides: Partial<ServiceConfig> = {},
-  options: { seed?: boolean; content?: boolean; mcKeys?: JWTVerifyGetKey; logStream?: { write(line: string): void } } = {}
+  options: {
+    seed?: boolean;
+    content?: boolean;
+    mcKeys?: JWTVerifyGetKey;
+    mediaStore?: MediaStore;
+    logStream?: { write(line: string): void };
+  } = {}
 ): TestApp {
   const fake = createFakeCt('us-store');
   if (options.seed !== false) seedShop(fake);
@@ -356,7 +363,7 @@ export function testApp(
     editorOrigins: ['https://mc.test'],
     ...overrides,
   };
-  return { app: buildServer(config, createDeps(config, { fetch: fake.fetch, mcKeys: options.mcKeys }), { logStream: options.logStream }), fake, config };
+  return { app: buildServer(config, createDeps(config, { fetch: fake.fetch, mcKeys: options.mcKeys, mediaStore: options.mediaStore }), { logStream: options.logStream }), fake, config };
 }
 
 export const RENDER_HEADERS = { 'x-pb-wire-version': '1' };

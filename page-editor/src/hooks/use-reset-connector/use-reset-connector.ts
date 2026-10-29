@@ -33,10 +33,6 @@ export type ResetContainer = {
 
 /**
  * Every custom-object container this app owns and may safely wipe.
- *
- * `contentools-configuration` (the image-picker JWT read by
- * `use-image-picker-token`) is intentionally excluded — it belongs to the
- * separate contentools app and is only ever read here, never owned.
  */
 export const RESET_CONTAINERS: ResetContainer[] = [
   {

@@ -21,9 +21,10 @@ import type { FieldNode } from 'graphql';
 export type ServiceRequest = (call: {
   /** The GraphQL operation being answered; informational (tests key failure injection on it). */
   operationName?: string;
-  method: 'GET' | 'PUT' | 'DELETE';
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   path: string;
   query?: Record<string, string | number | undefined>;
+  /** JSON-serialised, except `FormData`, which is sent as multipart. */
   body?: unknown;
 }) => Promise<{ status: number; json: unknown }>;
 

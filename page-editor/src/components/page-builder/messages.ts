@@ -225,16 +225,120 @@ export default defineMessages({
     defaultMessage: 'Remove item',
   },
 
-  // MediaField (image + video kinds)
+  // MediaField (image + video kinds) and its picker dialog
   mediaFieldNotConfigured: {
     id: 'PageBuilder.mediaField.notConfigured',
     defaultMessage:
-      'The media library is not configured. Set IMAGE_PICKER_BASE_URL to the media service URL to pick or upload media here.',
+      'Uploads are not set up. Set PAGE_BUILDER_SERVICE_URL to the page-builder service URL to choose or upload media here.',
   },
-  mediaFieldNoToken: {
-    id: 'PageBuilder.mediaField.noToken',
+  mediaFieldNothingSelected: {
+    id: 'PageBuilder.mediaField.nothingSelected',
+    defaultMessage: 'Nothing selected',
+  },
+  mediaFieldImageSelected: {
+    id: 'PageBuilder.mediaField.imageSelected',
+    defaultMessage: 'Image selected',
+  },
+  mediaFieldVideoSelected: {
+    id: 'PageBuilder.mediaField.videoSelected',
+    defaultMessage: 'Video selected',
+  },
+  mediaFieldSelectImage: {
+    id: 'PageBuilder.mediaField.selectImage',
+    defaultMessage: 'Select image',
+  },
+  mediaFieldSelectVideo: {
+    id: 'PageBuilder.mediaField.selectVideo',
+    defaultMessage: 'Select video',
+  },
+  mediaFieldReplace: {
+    id: 'PageBuilder.mediaField.replace',
+    defaultMessage: 'Replace',
+  },
+  mediaFieldRemove: {
+    id: 'PageBuilder.mediaField.remove',
+    defaultMessage: 'Remove',
+  },
+  mediaDialogTitleImage: {
+    id: 'PageBuilder.mediaDialog.titleImage',
+    defaultMessage: 'Select an image',
+  },
+  mediaDialogTitleVideo: {
+    id: 'PageBuilder.mediaDialog.titleVideo',
+    defaultMessage: 'Select a video',
+  },
+  mediaDialogDropZone: {
+    id: 'PageBuilder.mediaDialog.dropZone',
+    defaultMessage: 'Upload a file',
+  },
+  mediaDialogDropHint: {
+    id: 'PageBuilder.mediaDialog.dropHint',
+    defaultMessage: 'Drop a file here to upload it, or',
+  },
+  mediaDialogChooseFile: {
+    id: 'PageBuilder.mediaDialog.chooseFile',
+    defaultMessage: 'Choose a file',
+  },
+  mediaDialogAcceptsImage: {
+    id: 'PageBuilder.mediaDialog.acceptsImage',
+    defaultMessage: 'JPEG, PNG, GIF, WebP or AVIF',
+  },
+  mediaDialogAcceptsVideo: {
+    id: 'PageBuilder.mediaDialog.acceptsVideo',
+    defaultMessage: 'MP4 or WebM',
+  },
+  mediaDialogUploading: {
+    id: 'PageBuilder.mediaDialog.uploading',
+    defaultMessage: 'Uploading {name}…',
+  },
+  mediaDialogLibraryHeading: {
+    id: 'PageBuilder.mediaDialog.libraryHeading',
+    defaultMessage: 'Previously uploaded',
+  },
+  mediaDialogLoading: {
+    id: 'PageBuilder.mediaDialog.loading',
+    defaultMessage: 'Loading media',
+  },
+  mediaDialogEmpty: {
+    id: 'PageBuilder.mediaDialog.empty',
+    defaultMessage: 'Nothing has been uploaded yet.',
+  },
+  mediaDialogLoadMore: {
+    id: 'PageBuilder.mediaDialog.loadMore',
+    defaultMessage: 'Load more',
+  },
+  mediaDialogCancel: {
+    id: 'PageBuilder.mediaDialog.cancel',
+    defaultMessage: 'Cancel',
+  },
+  mediaDialogSelect: {
+    id: 'PageBuilder.mediaDialog.select',
+    defaultMessage: 'Select',
+  },
+  mediaDialogNotConfigured: {
+    id: 'PageBuilder.mediaDialog.notConfigured',
     defaultMessage:
-      'No media library token found, so uploading is unavailable. Browsing existing media still works.',
+      'Media storage is not set up on the page-builder service. Ask an administrator to configure its storage bucket (PB_MEDIA_BUCKET).',
+  },
+  mediaErrorTypeNotAllowed: {
+    id: 'PageBuilder.mediaDialog.error.typeNotAllowed',
+    defaultMessage: 'That kind of file cannot be used here.',
+  },
+  mediaErrorTypeMismatch: {
+    id: 'PageBuilder.mediaDialog.error.typeMismatch',
+    defaultMessage: 'The content of that file does not match its type.',
+  },
+  mediaErrorTooLarge: {
+    id: 'PageBuilder.mediaDialog.error.tooLarge',
+    defaultMessage: 'That file is too large.',
+  },
+  mediaErrorUnavailable: {
+    id: 'PageBuilder.mediaDialog.error.unavailable',
+    defaultMessage: 'Media storage is unavailable. Try again in a moment.',
+  },
+  mediaErrorOther: {
+    id: 'PageBuilder.mediaDialog.error.other',
+    defaultMessage: 'Something went wrong: {message}',
   },
 
   // ComponentsPane

@@ -5,6 +5,9 @@
  *
  * The `forward-url-origin` audience policy makes the JWT audience the service origin, so it does
  * not depend on the request path (the service sits under its Connect endpoint prefix).
+ *
+ * A `FormData` body (a media upload) is handed to `fetch` as it is, with no content type of ours:
+ * the browser writes the multipart boundary into the header itself.
  */
 
 import {
@@ -22,6 +25,8 @@ export const createForwardRequest =
       if (value !== undefined) url.searchParams.set(name, String(value));
     }
 
+    const isMultipart = body instanceof FormData;
+
     return executeHttpClientRequest(
       async (options: {
         credentials: 'include';
@@ -32,11 +37,11 @@ export const createForwardRequest =
           credentials: options.credentials,
           headers: {
             ...options.headers,
-            ...(body === undefined
+            ...(body === undefined || isMultipart
               ? {}
               : { 'content-type': 'application/json' }),
           },
-          body: body === undefined ? undefined : JSON.stringify(body),
+          body: body === undefined || isMultipart ? body : JSON.stringify(body),
         });
         const text = await res.text();
         let json: unknown;

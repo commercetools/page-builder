@@ -57,10 +57,10 @@ module.exports = {
   // these as coverage improves; never lower one to make a change pass.
   coverageThreshold: {
     global: {
-      statements: 90.8,
-      lines: 91.8,
-      branches: 80.5,
-      functions: 84.4,
+      statements: 91.4,
+      lines: 92.3,
+      branches: 81.6,
+      functions: 85.3,
     },
   },
 };

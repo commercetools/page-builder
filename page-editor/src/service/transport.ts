@@ -49,6 +49,13 @@ export function setServiceRequestForTests(
   clients.clear();
 }
 
+/** How a call reaches the service: through the MC gateway, or the in-process stand-in under test. */
+export function serviceRequestFor(
+  config: Pick<ServiceConfig, 'origin' | 'basePath'>
+): ServiceRequest {
+  return requestOverride ?? createForwardRequest(config);
+}
+
 export function serviceClientFor(
   config: Pick<ServiceConfig, 'origin' | 'basePath'>,
   projectKey: string,

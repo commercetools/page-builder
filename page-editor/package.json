@@ -31,7 +31,6 @@
     "@babel/core": "^7.22.17",
     "@babel/runtime-corejs3": "^7.22.15",
     "@chakra-ui/react": "^3.36.0",
-    "@commercetools-demo/puck-image-picker": "^0.8.1",
     "@commercetools-frontend/application-components": "27.5.0",
     "@commercetools-frontend/application-config": "27.5.0",
     "@commercetools-frontend/application-shell": "27.5.0",

@@ -29,6 +29,7 @@ storefront shim are generated from it (`npm run generate:api`; a test fails if t
 | `GET /v1/render` | storefront shim (server side) | `X-PB-Render-Key` + origin allowlist (`X-PB-Origin`), `X-PB-Wire-Version` |
 | `GET/POST /v1/catalog`, `POST /v1/catalog/{validate,publish}` | host CI | `Authorization: Bearer <PB_ADMIN_SECRET>` |
 | `/v1/admin/objects/…` | Merchant Center app | MC-user JWT forwarded by the MC API Gateway |
+| `GET/POST /v1/admin/media` | Merchant Center app | same MC-user JWT; `501` until `PB_MEDIA_BUCKET` is set |
 | `GET /status` (alias `/healthz`) | Connect liveness | none |
 
 Everything is mounted under `/service`, the application's Connect `endpoint`: Connect does not strip it from the URL, so the prefix is fixed rather than configurable.
@@ -62,6 +63,45 @@ project-key claim must be this service's project), then:
 
 The MC app must forward with the `forward-url-origin` audience policy (it does).
 
+### Media uploads
+
+The editor's image and video fields upload to, and browse, a Google Cloud Storage bucket **through this service**:
+`POST /v1/admin/media` (multipart, one `file` part) and `GET /v1/admin/media?type=image|video|file`. They sit behind the
+same MC JWT as the object gateway, so there is no media credential, token or URL to set up in the editor, and no
+business unit: one service serves one project, and its bucket prefix is its namespace. What a field stores is the plain
+file URL (`https://storage.googleapis.com/<bucket>/<key>`), exactly as when it was a free-text box.
+
+- A file is accepted only when its declared type is on the allowlist **and** its own first bytes agree, so a renamed
+  file is refused (`415`). SVG and HTML are not supported at all; they are scriptable and the bucket is public.
+- Objects are keyed `<PB_MEDIA_PATH_PREFIX>/<images|videos|files>/<reverse-timestamp>-<id>-<name>.<ext>`: the kind folder
+  makes listing a plain prefix read (exact paging, newest first), and the id keeps same-name uploads apart.
+- The size cap (`PB_MEDIA_MAX_BYTES`, at most 25 MiB) is enforced while the upload streams; the file is then held in
+  memory to be checked and stored. It is not subject to the 5 MiB JSON body limit.
+- Every upload is audit-logged (`audit: true`, `actor.userId`, key, size, type). A storage failure is a generic `502`; the
+  log carries only the error's name or code, never its message, because SDK errors can quote credentials.
+- Nothing is ever deleted through the API, so a page can never be left pointing at a file the editor removed.
+
+**Set up the bucket** (once; adjust names and location):
+
+```bash
+BUCKET=my-page-builder-media
+gcloud storage buckets create gs://$BUCKET --location=EU --uniform-bucket-level-access
+# Pages read the files straight from storage.googleapis.com. This role also lets anyone list the
+# object names, so use a bucket that holds nothing but page-builder media.
+gcloud storage buckets add-iam-policy-binding gs://$BUCKET --member=allUsers --role=roles/storage.objectViewer
+
+gcloud iam service-accounts create page-builder-media
+SA=page-builder-media@$(gcloud config get-value project).iam.gserviceaccount.com
+gcloud storage buckets add-iam-policy-binding gs://$BUCKET --member=serviceAccount:$SA --role=roles/storage.objectCreator
+gcloud storage buckets add-iam-policy-binding gs://$BUCKET --member=serviceAccount:$SA --role=roles/storage.objectViewer
+gcloud iam service-accounts keys create key.json --iam-account=$SA
+base64 -i key.json | tr -d '\n'      # the value of PB_MEDIA_SERVICE_ACCOUNT_KEY_B64
+```
+
+Set `PB_MEDIA_BUCKET` and `PB_MEDIA_SERVICE_ACCOUNT_KEY_B64` together (setting one is a start-up error). If your
+organisation blocks service-account keys (`iam.disableServiceAccountKeyCreation`) this service cannot reach the bucket:
+it has no Workload Identity path, because Connect does not run in your Google Cloud project.
+
 ## Configuration
 
 On Connect nothing about commercetools access is configured by hand. `connect.yaml` declares
@@ -74,6 +114,10 @@ time and injects `CTP_PROJECT_KEY`, `CTP_CLIENT_ID`, `CTP_CLIENT_SECRET`, `CTP_S
 | `PB_RENDER_ORIGINS` | standard | yes | | comma-separated storefront server origins allowed to call the render API |
 | `PB_EDITOR_ORIGINS` | standard | yes | `https://mc.europe-west1.gcp.commercetools.com` | Merchant Center origins allowed to embed and drive the visual-editing bridge |
 | `PB_MC_ISSUER` | standard | no | | Merchant Center API Gateway the admin JWTs come from (`gcp-eu`, `gcp-us`, `gcp-au`, `aws-eu`, `aws-us` or a URL); unset disables the admin API. The JWT audience is the origin of `CONNECT_SERVICE_URL`, the service's public URL, which Connect provides (set it yourself only for local development) |
+| `PB_MEDIA_BUCKET` | standard | no | | Google Cloud Storage bucket for uploaded media; with `PB_MEDIA_SERVICE_ACCOUNT_KEY_B64`, or neither (uploads off, endpoints answer `501`) |
+| `PB_MEDIA_PATH_PREFIX` | standard | no | `page-builder/media` | object key prefix inside the bucket |
+| `PB_MEDIA_MAX_BYTES` | standard | no | `10485760` | largest accepted upload, 1024 to 26214400 |
+| `PB_MEDIA_ALLOWED_TYPES` | standard | no | all supported | comma-separated subset of `image/jpeg`, `image/png`, `image/gif`, `image/webp`, `image/avif`, `video/mp4`, `video/webm`, `application/pdf` |
 | `PB_CACHE_TTL_SECONDS` | standard | no | `15` | commercetools read cache; `0` disables; preview and draft reads are never cached |
 | `PB_FACET_ATTRIBUTES` | standard | no | | product attributes to offer as facets, in order; empty derives them from the product types |
 | `PB_FACET_LIMIT` | standard | no | `8` | maximum derived facets when `PB_FACET_ATTRIBUTES` is empty |
@@ -81,6 +125,7 @@ time and injects `CTP_PROJECT_KEY`, `CTP_CLIENT_ID`, `CTP_CLIENT_SECRET`, `CTP_S
 | `PB_RENDER_KEY` | secured | yes | | key the storefront shim presents on render calls |
 | `PB_PREVIEW_TOKEN` | secured | no | | unlocks draft/preview and edit mode; unset disables previews |
 | `PB_ADMIN_SECRET` | secured | yes | | bearer secret for catalog validate, push and publish from CI |
+| `PB_MEDIA_SERVICE_ACCOUNT_KEY_B64` | secured | no | | service-account JSON key for `PB_MEDIA_BUCKET`, base64 on one line (Storage Object Creator + Viewer) |
 
 Production start-up fails fast, listing every problem, when a required value is missing. In local
 development the render key and origin allowlist are optional. For a real project locally,
@@ -109,6 +154,7 @@ commercetools has a 10 s timeout and no retry; the caller decides whether to try
 | Storefront render | **fail-closed to the shim, open to the shopper**: the service answers 5xx; reads inside the 15 s cache window still succeed | the shim has its own 2 s budget (`PB_TIMEOUT_MS`) and renders the host's `fallback` on any failure, so a down service degrades the page, not the site |
 | Catalog push / publish | **fail-closed**: nothing is written unless validation and the write both succeed | a half-written catalog is worse than a stale one; a repeat is a no-op (content hash), so CI can simply retry |
 | Merchant Center object gateway | **fail-closed**: 502 `upstream_error`; a stale-version write is a 409 the MC app retries | the editor must never believe a save succeeded when it did not |
+| Media upload and browse | **fail-closed**: 502 `storage_unavailable`; nothing is reported stored unless the bucket confirmed it | the editor must never put a URL on a page that does not exist; a failed upload is simply retried |
 | Authentication (render key, admin secret, MC JWT) | **fail-closed**: a JWKS that cannot be fetched means the request is denied | no credential check is ever skipped when it cannot complete |
 
 ### Operations
@@ -166,6 +212,7 @@ src/cache.ts                       15s single-flight read cache with bypass
 src/domain/                        page store, transform, route matching, catalog read/write/validate
 src/commerce/                      products (Product Search), categories, facets, canonical mappers
 src/resolve/                       data-source resolvers and route-driven fills
-src/routes/                        render, catalog, admin
+src/routes/                        render, catalog, admin, media
+src/media/                         upload rules (type allowlist + content sniffing, keys) and the Google Cloud Storage store
 src/testing/                       in-memory commercetools, fixtures, local dev server
 ```

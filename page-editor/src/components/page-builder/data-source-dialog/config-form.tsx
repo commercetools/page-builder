@@ -257,7 +257,7 @@ export function ConfigForm({
                 <MediaField
                   value={v}
                   onChange={(url) => set(f.key, url)}
-                  imagesOnly={f.kind === 'image'}
+                  kind={f.kind}
                 />
               </FormField.Input>
             </FormField.Root>

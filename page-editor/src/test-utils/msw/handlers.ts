@@ -42,7 +42,6 @@ export const CUSTOM_OBJECT_SINGLE_QUERIES = [
   'FetchComments',
   'FetchPageWorkflow',
   'FetchPreviewSettings',
-  'FetchImagePickerToken',
 ] as const;
 
 /** Mutations that write one object. */
@@ -54,7 +53,6 @@ export const CUSTOM_OBJECT_UPSERT_MUTATIONS = [
   'UpsertWorkflow',
   'UpsertPageWorkflow',
   'UpsertPreviewSettings',
-  'UpsertImagePickerToken',
 ] as const;
 
 /** Mutations that remove one object. */

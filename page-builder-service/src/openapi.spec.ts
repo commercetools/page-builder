@@ -21,6 +21,7 @@ describe('openapi.yaml', () => {
       paths: Record<string, unknown>;
     };
     expect(Object.keys(doc.paths).sort()).toEqual([
+      '/v1/admin/media',
       '/v1/admin/objects/{container}',
       '/v1/admin/objects/{container}/{key}',
       '/v1/catalog',

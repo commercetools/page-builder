@@ -22,7 +22,6 @@ import LayoutPickerDialog from './layout-picker-dialog';
 import SettingsPane from './settings-pane';
 import PreviewFrame from './preview/preview-frame';
 import { originOf } from './preview/preview-bridge';
-import { ImagePickerHost } from './shared/image-picker-host';
 import ElementCommentsDialog from './comments/element-comments-dialog';
 import MessagesDrawer from './comments/messages-drawer';
 import WorkflowHistoryDrawer from './workflow-history-drawer';
@@ -206,199 +205,133 @@ const PageBuilder = () => {
   }, [bridgeConnected, viewMode, preview.enabled, previewRects, pageIdSet]);
 
   return (
-    // Mounted here so the settings pane and the data-source config dialog — both rendered
-    // below — share one media-service connection and one JWT read.
-    <ImagePickerHost>
-      <Flex
-        direction="column"
-        height="calc(100vh - 56px)"
-        overflow="hidden"
-        onDragEnd={() => setDraggedType(null)}
-      >
-        <ToastOutlet />
-        <LayoutPickerDialog
-          open={!!pickerSection}
-          section={
-            pickerSection ?? sections[1]?.id ?? sections[0]?.id ?? 'MAIN'
-          }
-          onAdd={handlePickerAdd}
-          onClose={() => setPickerSection(null)}
-        />
-        <MenuBar
-          pageId={pageId}
-          pageTitle={pageNode.title}
-          version={(
-            doc.draftFetcher.current?.appVersion ??
-            doc.currentPublished?.appVersion
-          )?.toString()}
-          state={
-            doc.draftFetcher.loading && doc.initialized !== pageId
-              ? undefined
-              : doc.draftFetcher.current
-              ? doc.currentPublished && !!doc.draftFetcher.current.publishedAt
-                ? 'published'
-                : 'draft'
-              : undefined
-          }
-          device={device}
-          onDeviceChange={setDevice}
-          viewMode={viewMode}
-          onViewModeChange={preview.changeViewMode}
-          previewEnabled={preview.enabled}
-          canUndo={doc.canUndo}
-          canRedo={doc.canRedo}
-          onUndo={doc.undo}
-          onRedo={doc.redo}
-          saveState={doc.saveState}
-          canSave={dirty && !saving}
-          canPublish={
-            workflow.active ? workflow.canPublish : doc.legacyCanPublish
-          }
-          publishLoading={
-            doc.draftFetcher.loading && doc.initialized !== pageId
-          }
-          onSave={doc.save}
-          onPublish={
-            workflow.active ? workflow.publishAndReset : doc.publishPage
-          }
-          onSaveAndPublish={doc.saveAndPublish}
-          onOpenComments={() => {
-            comments.setMessagesOpen(true);
-            comments.markSeen();
-          }}
-          unreadCount={comments.unreadCount}
-          workflowActive={workflow.active}
-          workflowNextLabel={workflow.nextLabel}
-          workflowAtFinish={workflow.atFinish}
-          onAdvance={workflow.advance}
-          canAdvance={workflow.canAdvance}
-          onReject={() => workflow.setRejectOpen(true)}
-          canReject={workflow.canReject}
-          onOpenHistory={() => workflow.setHistoryOpen(true)}
-          workflowName={workflow.active ? workflow.name : undefined}
-          workflowStageLabel={workflow.stageLabel}
-        />
-        {viewMode === 'preview' ? (
-          <Flex flex={1} minHeight={0}>
-            <LeftPane
-              activePanel={activeLeftPanel}
-              onActivatePanel={setActiveLeftPanel}
-              onDragStart={(type) => setDraggedType(type)}
-              catalog={previewPaletteCatalog}
-              groups={componentGroups}
-              pageType={pageType}
-              page={page}
-              sections={sections}
-              selectedLayoutId={selection.layoutId}
-              selectedCompId={selection.compId}
-              onSelectLayout={selection.selectLayout}
-              onSelectComp={selection.selectComp}
-            />
-            <Splitter.Root
-              {...settingsSplitterProps}
-              flex={1}
-              minWidth={0}
-              collapsible
-              collapsed={!previewSettingsOpen}
-              isDisabled={!previewSettingsOpen}
-            >
-              <Splitter.Main display="flex">
-                <PreviewFrame
-                  ref={previewFrameRef}
-                  url={preview.url}
-                  configured={preview.enabled}
-                  device={device}
-                  locales={preview.settings?.locales ?? []}
-                  locale={preview.locale}
-                  onLocaleChange={preview.setLocale}
-                  onRefresh={preview.refresh}
-                  onConfigure={() => routerHistory.push(pagesPath)}
-                  envOptions={preview.envOptions}
-                  activeEnv={preview.activeEnv}
-                  onEnvChange={preview.changeEnv}
-                  rects={previewRects}
-                  selectedId={selection.elementId}
-                  hoveredId={previewHoveredId}
-                  onComment={() => {
-                    if (selection.elementId)
-                      comments.setTarget({
-                        kind: 'element',
-                        elementId: selection.elementId,
-                      });
-                  }}
-                  commentCount={
-                    selection.elementId
-                      ? comments.counts[selection.elementId]
-                      : undefined
-                  }
-                  onDuplicate={duplicateSelected}
-                  onDelete={deleteSelected}
-                  dropzones={previewDropzones}
-                  dragActive={!!draggedType}
-                  onPaletteDrop={handlePaletteDrop}
-                  idMismatch={previewIdMismatch}
-                />
-              </Splitter.Main>
-              <Splitter.Handle />
-              <Splitter.Aside>
-                {previewSettingsOpen && (
-                  <SettingsPane
-                    page={page}
-                    onPageChange={pushHistory}
-                    selectedLayoutId={selection.layoutId}
-                    selectedCompId={selection.compId}
-                    onClose={() => selection.selectLayout(null)}
-                    savedDataSources={doc.savedDataSources}
-                    onSaveDataSources={doc.saveDataSource}
-                    onPublishDataSources={doc.publishDataSource}
-                    instancesSaving={doc.instancesSaving}
-                    instancesDirty={doc.instancesDirty}
-                    componentCatalog={componentCatalog}
-                    dataSourceCatalog={dataSourceCatalog}
-                  />
-                )}
-              </Splitter.Aside>
-            </Splitter.Root>
-          </Flex>
-        ) : (
-          <Flex flex={1} minHeight={0}>
-            <LeftPane
-              activePanel={activeLeftPanel}
-              onActivatePanel={setActiveLeftPanel}
-              onDragStart={(type) => setDraggedType(type)}
-              catalog={componentCatalog}
-              groups={componentGroups}
-              pageType={pageType}
-              page={page}
-              sections={sections}
-              selectedLayoutId={selection.layoutId}
-              selectedCompId={selection.compId}
-              onSelectLayout={selection.selectLayout}
-              onSelectComp={selection.selectComp}
-            />
-            <Splitter.Root {...settingsSplitterProps} flex={1} minWidth={0}>
-              <Splitter.Main display="flex">
-                <LayoutCanvas
-                  page={page}
-                  sections={sections}
-                  pageType={pageType}
-                  onPageChange={pushHistory}
-                  selectedLayoutId={selection.layoutId}
-                  selectedCompId={selection.compId}
-                  onSelectLayout={selection.selectLayout}
-                  onSelectComp={selection.selectComp}
-                  draggedComponentType={draggedType}
-                  device={device}
-                  onAddLayout={setPickerSection}
-                  componentCatalog={componentCatalog}
-                  onCommentElement={(id) =>
-                    comments.setTarget({ kind: 'element', elementId: id })
-                  }
-                  commentCounts={comments.counts}
-                />
-              </Splitter.Main>
-              <Splitter.Handle />
-              <Splitter.Aside>
+    <Flex
+      direction="column"
+      height="calc(100vh - 56px)"
+      overflow="hidden"
+      onDragEnd={() => setDraggedType(null)}
+    >
+      <ToastOutlet />
+      <LayoutPickerDialog
+        open={!!pickerSection}
+        section={pickerSection ?? sections[1]?.id ?? sections[0]?.id ?? 'MAIN'}
+        onAdd={handlePickerAdd}
+        onClose={() => setPickerSection(null)}
+      />
+      <MenuBar
+        pageId={pageId}
+        pageTitle={pageNode.title}
+        version={(
+          doc.draftFetcher.current?.appVersion ??
+          doc.currentPublished?.appVersion
+        )?.toString()}
+        state={
+          doc.draftFetcher.loading && doc.initialized !== pageId
+            ? undefined
+            : doc.draftFetcher.current
+            ? doc.currentPublished && !!doc.draftFetcher.current.publishedAt
+              ? 'published'
+              : 'draft'
+            : undefined
+        }
+        device={device}
+        onDeviceChange={setDevice}
+        viewMode={viewMode}
+        onViewModeChange={preview.changeViewMode}
+        previewEnabled={preview.enabled}
+        canUndo={doc.canUndo}
+        canRedo={doc.canRedo}
+        onUndo={doc.undo}
+        onRedo={doc.redo}
+        saveState={doc.saveState}
+        canSave={dirty && !saving}
+        canPublish={
+          workflow.active ? workflow.canPublish : doc.legacyCanPublish
+        }
+        publishLoading={doc.draftFetcher.loading && doc.initialized !== pageId}
+        onSave={doc.save}
+        onPublish={workflow.active ? workflow.publishAndReset : doc.publishPage}
+        onSaveAndPublish={doc.saveAndPublish}
+        onOpenComments={() => {
+          comments.setMessagesOpen(true);
+          comments.markSeen();
+        }}
+        unreadCount={comments.unreadCount}
+        workflowActive={workflow.active}
+        workflowNextLabel={workflow.nextLabel}
+        workflowAtFinish={workflow.atFinish}
+        onAdvance={workflow.advance}
+        canAdvance={workflow.canAdvance}
+        onReject={() => workflow.setRejectOpen(true)}
+        canReject={workflow.canReject}
+        onOpenHistory={() => workflow.setHistoryOpen(true)}
+        workflowName={workflow.active ? workflow.name : undefined}
+        workflowStageLabel={workflow.stageLabel}
+      />
+      {viewMode === 'preview' ? (
+        <Flex flex={1} minHeight={0}>
+          <LeftPane
+            activePanel={activeLeftPanel}
+            onActivatePanel={setActiveLeftPanel}
+            onDragStart={(type) => setDraggedType(type)}
+            catalog={previewPaletteCatalog}
+            groups={componentGroups}
+            pageType={pageType}
+            page={page}
+            sections={sections}
+            selectedLayoutId={selection.layoutId}
+            selectedCompId={selection.compId}
+            onSelectLayout={selection.selectLayout}
+            onSelectComp={selection.selectComp}
+          />
+          <Splitter.Root
+            {...settingsSplitterProps}
+            flex={1}
+            minWidth={0}
+            collapsible
+            collapsed={!previewSettingsOpen}
+            isDisabled={!previewSettingsOpen}
+          >
+            <Splitter.Main display="flex">
+              <PreviewFrame
+                ref={previewFrameRef}
+                url={preview.url}
+                configured={preview.enabled}
+                device={device}
+                locales={preview.settings?.locales ?? []}
+                locale={preview.locale}
+                onLocaleChange={preview.setLocale}
+                onRefresh={preview.refresh}
+                onConfigure={() => routerHistory.push(pagesPath)}
+                envOptions={preview.envOptions}
+                activeEnv={preview.activeEnv}
+                onEnvChange={preview.changeEnv}
+                rects={previewRects}
+                selectedId={selection.elementId}
+                hoveredId={previewHoveredId}
+                onComment={() => {
+                  if (selection.elementId)
+                    comments.setTarget({
+                      kind: 'element',
+                      elementId: selection.elementId,
+                    });
+                }}
+                commentCount={
+                  selection.elementId
+                    ? comments.counts[selection.elementId]
+                    : undefined
+                }
+                onDuplicate={duplicateSelected}
+                onDelete={deleteSelected}
+                dropzones={previewDropzones}
+                dragActive={!!draggedType}
+                onPaletteDrop={handlePaletteDrop}
+                idMismatch={previewIdMismatch}
+              />
+            </Splitter.Main>
+            <Splitter.Handle />
+            <Splitter.Aside>
+              {previewSettingsOpen && (
                 <SettingsPane
                   page={page}
                   onPageChange={pushHistory}
@@ -413,44 +346,100 @@ const PageBuilder = () => {
                   componentCatalog={componentCatalog}
                   dataSourceCatalog={dataSourceCatalog}
                 />
-              </Splitter.Aside>
-            </Splitter.Root>
-          </Flex>
-        )}
+              )}
+            </Splitter.Aside>
+          </Splitter.Root>
+        </Flex>
+      ) : (
+        <Flex flex={1} minHeight={0}>
+          <LeftPane
+            activePanel={activeLeftPanel}
+            onActivatePanel={setActiveLeftPanel}
+            onDragStart={(type) => setDraggedType(type)}
+            catalog={componentCatalog}
+            groups={componentGroups}
+            pageType={pageType}
+            page={page}
+            sections={sections}
+            selectedLayoutId={selection.layoutId}
+            selectedCompId={selection.compId}
+            onSelectLayout={selection.selectLayout}
+            onSelectComp={selection.selectComp}
+          />
+          <Splitter.Root {...settingsSplitterProps} flex={1} minWidth={0}>
+            <Splitter.Main display="flex">
+              <LayoutCanvas
+                page={page}
+                sections={sections}
+                pageType={pageType}
+                onPageChange={pushHistory}
+                selectedLayoutId={selection.layoutId}
+                selectedCompId={selection.compId}
+                onSelectLayout={selection.selectLayout}
+                onSelectComp={selection.selectComp}
+                draggedComponentType={draggedType}
+                device={device}
+                onAddLayout={setPickerSection}
+                componentCatalog={componentCatalog}
+                onCommentElement={(id) =>
+                  comments.setTarget({ kind: 'element', elementId: id })
+                }
+                commentCounts={comments.counts}
+              />
+            </Splitter.Main>
+            <Splitter.Handle />
+            <Splitter.Aside>
+              <SettingsPane
+                page={page}
+                onPageChange={pushHistory}
+                selectedLayoutId={selection.layoutId}
+                selectedCompId={selection.compId}
+                onClose={() => selection.selectLayout(null)}
+                savedDataSources={doc.savedDataSources}
+                onSaveDataSources={doc.saveDataSource}
+                onPublishDataSources={doc.publishDataSource}
+                instancesSaving={doc.instancesSaving}
+                instancesDirty={doc.instancesDirty}
+                componentCatalog={componentCatalog}
+                dataSourceCatalog={dataSourceCatalog}
+              />
+            </Splitter.Aside>
+          </Splitter.Root>
+        </Flex>
+      )}
 
-        <ElementCommentsDialog
-          isOpen={!!comments.target}
-          onClose={() => comments.setTarget(null)}
-          target={comments.target}
-          title={comments.dialogTitle}
-          threads={comments.threads}
-          updater={comments.updater}
-          author={comments.author}
-        />
-        <MessagesDrawer
-          isOpen={comments.messagesOpen}
-          onClose={() => comments.setMessagesOpen(false)}
-          threads={comments.threads}
-          author={comments.author}
-          updater={comments.updater}
-          resolveElementLabel={comments.resolveElementLabel}
-          onNavigateToElement={comments.navigateToElement}
-        />
-        <WorkflowHistoryDrawer
-          isOpen={workflow.historyOpen}
-          onClose={() => workflow.setHistoryOpen(false)}
-          workflowName={workflow.name}
-          history={workflow.history}
-        />
-        <RejectDialog
-          isOpen={workflow.rejectOpen}
-          onClose={() => workflow.setRejectOpen(false)}
-          onConfirm={workflow.reject}
-          stepLabel={workflow.currentStepLabel}
-          busy={workflow.committing}
-        />
-      </Flex>
-    </ImagePickerHost>
+      <ElementCommentsDialog
+        isOpen={!!comments.target}
+        onClose={() => comments.setTarget(null)}
+        target={comments.target}
+        title={comments.dialogTitle}
+        threads={comments.threads}
+        updater={comments.updater}
+        author={comments.author}
+      />
+      <MessagesDrawer
+        isOpen={comments.messagesOpen}
+        onClose={() => comments.setMessagesOpen(false)}
+        threads={comments.threads}
+        author={comments.author}
+        updater={comments.updater}
+        resolveElementLabel={comments.resolveElementLabel}
+        onNavigateToElement={comments.navigateToElement}
+      />
+      <WorkflowHistoryDrawer
+        isOpen={workflow.historyOpen}
+        onClose={() => workflow.setHistoryOpen(false)}
+        workflowName={workflow.name}
+        history={workflow.history}
+      />
+      <RejectDialog
+        isOpen={workflow.rejectOpen}
+        onClose={() => workflow.setRejectOpen(false)}
+        onConfirm={workflow.reject}
+        stepLabel={workflow.currentStepLabel}
+        busy={workflow.committing}
+      />
+    </Flex>
   );
 };
 

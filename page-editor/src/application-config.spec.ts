@@ -12,8 +12,6 @@ const REQUIRED = {
   APPLICATION_URL: 'https://app.example.test',
 };
 const OPTIONAL = [
-  'IMAGE_PICKER_BASE_URL',
-  'IMAGE_PICKER_BUSINESS_UNIT_KEY',
   'PAGE_BUILDER_SERVICE_URL',
   'PAGE_BUILDER_SERVICE_HOOKS',
 ] as const;

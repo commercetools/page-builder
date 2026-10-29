@@ -15,24 +15,13 @@ deployAs:
           description: one of the following gcp-us, gcp-eu, aws-us, aws-eu
           required: true
           default: 'gcp-eu'
-        - key: INITIAL_PROJECT_KEY
-          description: development project key
-          required: true
         # Connection to the page-builder service (optional)
         - key: PAGE_BUILDER_SERVICE_URL
-          description: page-builder service URL including its /service path; empty keeps the app on the Merchant Center GraphQL gateway
+          description: page-builder service URL including its /service path [Use a dummy URL for the first deployment]; empty keeps the app on the Merchant Center GraphQL gateway and turns the image and video upload field off (uploads are stored by the service, see PB_MEDIA_BUCKET)
           required: false
         - key: PAGE_BUILDER_SERVICE_HOOKS
           description: all, or a comma list of hook families (pages, page-components, comments, workflows, page-workflow, preview-settings, data-sources, sections, components, instances, reset) that use the service; empty means none
           required: false
-        # Image picker (optional)
-        - key: IMAGE_PICKER_BASE_URL
-          description: contentools media service base URL including the /service path prefix; empty disables the image picker
-          required: false
-        - key: IMAGE_PICKER_BUSINESS_UNIT_KEY
-          description: business unit key namespacing media storage
-          required: false
-          default: 'default'
   - name: page-builder-service
     applicationType: service
     endpoint: /service
@@ -48,6 +37,21 @@ deployAs:
           default: 'https://mc.europe-west1.gcp.commercetools.com'
         - key: PB_MC_ISSUER
           description: Merchant Center API Gateway the MC app's JWTs come from, as a cloud identifier (gcp-eu, gcp-us, gcp-au, aws-eu, aws-us) or a URL; the JWT audience is this service's own public origin, taken from the CONNECT_SERVICE_URL that Connect provides; unset disables the Merchant Center admin API
+          required: false
+        # Media uploads (optional): the bucket the editor's image and video fields upload to
+        - key: PB_MEDIA_BUCKET
+          description: Google Cloud Storage bucket for uploaded media (uniform bucket-level access, with allUsers as Storage Object Viewer so pages can read the files); set together with PB_MEDIA_SERVICE_ACCOUNT_KEY_B64, or leave both empty to switch uploads off
+          required: false
+        - key: PB_MEDIA_PATH_PREFIX
+          description: object key prefix inside the bucket, without leading or trailing slash
+          required: false
+          default: 'page-builder/media'
+        - key: PB_MEDIA_MAX_BYTES
+          description: largest accepted upload in bytes (1024 to 26214400)
+          required: false
+          default: '10485760'
+        - key: PB_MEDIA_ALLOWED_TYPES
+          description: comma-separated allowed upload content types, from image/jpeg, image/png, image/gif, image/webp, image/avif, video/mp4, video/webm, application/pdf; empty allows all of them
           required: false
         # Read cache and listing facets (optional)
         - key: PB_CACHE_TTL_SECONDS
@@ -76,6 +80,9 @@ deployAs:
         - key: PB_ADMIN_SECRET
           description: bearer secret for catalog validate, push and publish from CI
           required: true
+        - key: PB_MEDIA_SERVICE_ACCOUNT_KEY_B64
+          description: service-account JSON key for PB_MEDIA_BUCKET, base64 on one line (Storage Object Creator and Viewer); leave empty to switch uploads off
+          required: false
 inheritAs:
   # Connect generates the API client at install time with exactly these scopes and injects
   # CTP_PROJECT_KEY, CTP_CLIENT_ID, CTP_CLIENT_SECRET, CTP_SCOPE, CTP_API_URL and CTP_AUTH_URL

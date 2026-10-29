@@ -29,10 +29,12 @@ Both are declared in one `connect.yaml`, so one connector deploys both into a pr
 | `PB_MC_ISSUER` | standard | no | The project region's MC API Gateway (cloud identifier or URL); unset disables the MC gateway. The JWT audience is the origin of `CONNECT_SERVICE_URL`, the service's public URL, which Connect provides (set it by hand only for local development) |
 | `PB_CACHE_TTL_SECONDS` | standard | no | Read cache, default 15, 0 disables; drafts are never cached |
 | `PB_FACET_ATTRIBUTES`, `PB_FACET_LIMIT` | standard | no | Which product attributes become listing facets |
+| `PB_MEDIA_BUCKET`, `PB_MEDIA_PATH_PREFIX`, `PB_MEDIA_MAX_BYTES`, `PB_MEDIA_ALLOWED_TYPES` | standard | no | Google Cloud Storage bucket the editor's image and video fields upload to, and its limits. Unset: uploads are off |
 | `LOG_LEVEL` | standard | no | |
 | `PB_RENDER_KEY` | secured | yes | What clients present on render calls |
 | `PB_PREVIEW_TOKEN` | secured | no | Unlocks drafts and edit mode; unset disables previews |
 | `PB_ADMIN_SECRET` | secured | yes | Catalog validate, push, publish from CI |
+| `PB_MEDIA_SERVICE_ACCOUNT_KEY_B64` | secured | no | Service-account key for `PB_MEDIA_BUCKET` (base64, one line); set together with the bucket |
 
 Generate the three secrets randomly and store them in the CI and platform secret stores. They are never entered in chat.
 
@@ -46,7 +48,7 @@ Generate the three secrets randomly and store them in the CI and platform secret
 | `INITIAL_PROJECT_KEY` | Local development project |
 | `PAGE_BUILDER_SERVICE_URL` | The service URL **including** its endpoint path. Empty keeps every hook on the MC GraphQL gateway |
 | `PAGE_BUILDER_SERVICE_HOOKS` | `all`, or a comma list of hook families |
-| `IMAGE_PICKER_*` | Optional media picker |
+| *(none)* | Image and video fields need only `PAGE_BUILDER_SERVICE_URL`; uploads are stored by the **service** (`PB_MEDIA_*` above) |
 
 The app's content-security policy lists the origins it may frame (client preview) and call. That list lives in the app's config file, so a new client origin means a change and a redeploy. Collect all origins first.
 

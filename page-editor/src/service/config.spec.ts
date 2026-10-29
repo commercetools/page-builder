@@ -1,4 +1,8 @@
-import { SERVICE_FEATURES, parseServiceConfig } from './config';
+import {
+  SERVICE_FEATURES,
+  parseServiceConfig,
+  parseServiceEndpoint,
+} from './config';
 
 const env = (over: Record<string, unknown> = {}) => ({
   pageBuilderServiceUrl: 'https://svc.example.com/service/',
@@ -56,5 +60,31 @@ describe('parseServiceConfig', () => {
       env({ pageBuilderServiceHooks: ' pages , comments,bogus' })
     )!.features;
     expect([...features].sort()).toEqual(['comments', 'pages']);
+  });
+});
+
+describe('parseServiceEndpoint', () => {
+  it('is off without a usable service URL', () => {
+    expect(parseServiceEndpoint(undefined)).toBeNull();
+    expect(parseServiceEndpoint({})).toBeNull();
+    expect(parseServiceEndpoint({ pageBuilderServiceUrl: '  ' })).toBeNull();
+    expect(
+      parseServiceEndpoint({ pageBuilderServiceUrl: 'not a url' })
+    ).toBeNull();
+  });
+
+  it('needs no hook family: media works with the data hooks left on the MC gateway', () => {
+    const only = { pageBuilderServiceUrl: 'https://svc.example.com/service/' };
+    expect(parseServiceConfig(only)).toBeNull();
+    expect(parseServiceEndpoint(only)).toEqual({
+      origin: 'https://svc.example.com',
+      basePath: '/service',
+    });
+  });
+
+  it('is what parseServiceConfig builds on', () => {
+    expect(
+      parseServiceConfig(env({ pageBuilderServiceHooks: 'pages' }))
+    ).toMatchObject(parseServiceEndpoint(env()) as object);
   });
 });

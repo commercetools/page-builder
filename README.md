@@ -308,7 +308,16 @@ The app's page-builder data hooks (pages, components, comments, workflows, previ
 | `PAGE_BUILDER_SERVICE_URL` | the service URL including `/service`; empty keeps every hook on the GraphQL gateway |
 | `PAGE_BUILDER_SERVICE_HOOKS` | `all`, or a comma list of `pages, page-components, comments, workflows, page-workflow, preview-settings, data-sources, sections, components, instances, reset` |
 
-The service must be configured with `PB_MC_ISSUER` (this project's Merchant Center API Gateway, e.g. `gcp-eu`) and, for its audience, the `CONNECT_SERVICE_URL` that Connect provides (its own public URL). Calls go through `/proxy/forward-to`; the service verifies the forwarded JWT, restricts access to the page-builder containers, keeps the host catalog read-only, and audit-logs each write with the acting user. The image-picker token (`contentools-configuration`) and the product/category pickers keep using the Merchant Center gateway. Roll out one family at a time (they are independent) and roll back by editing the list. Run `yarn test:service` in `page-editor/` to run the whole suite through the service transport.
+The service must be configured with `PB_MC_ISSUER` (this project's Merchant Center API Gateway, e.g. `gcp-eu`) and, for its audience, the `CONNECT_SERVICE_URL` that Connect provides (its own public URL). Calls go through `/proxy/forward-to`; the service verifies the forwarded JWT, restricts access to the page-builder containers, keeps the host catalog read-only, and audit-logs each write with the acting user. The product/category pickers keep using the Merchant Center gateway. Roll out one family at a time (they are independent) and roll back by editing the list. Run `yarn test:service` in `page-editor/` to run the whole suite through the service transport.
+
+### Images and videos
+
+`kind: 'image'` and `kind: 'video'` fields upload to, and pick from, a Google Cloud Storage bucket owned by the **service**. The
+editor needs only `PAGE_BUILDER_SERVICE_URL` (no hook family has to use the service); the service needs `PB_MEDIA_BUCKET` and
+`PB_MEDIA_SERVICE_ACCOUNT_KEY_B64`. It reuses the same Merchant Center sign-in as everything else, so there is no separate media
+service, token, business unit or image URL to configure. A field stores the plain file URL, so existing pages (including ones with a
+URL typed or pasted in) keep working. The bucket setup, limits and security rules are in the
+[service README](./page-builder-service/README.md#media-uploads). With no bucket configured the picker says so and nothing breaks.
 
 ---
 

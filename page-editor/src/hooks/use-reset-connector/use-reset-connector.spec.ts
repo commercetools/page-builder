@@ -34,8 +34,9 @@ describe('RESET_CONTAINERS', () => {
     );
   });
 
-  it('excludes the contentools container, which this app only reads', () => {
-    // Wiping it would break the image picker for an app we do not own.
+  it('excludes the contentools container, which belongs to another app', () => {
+    // The page builder no longer reads it, but a project may still run contentools beside it,
+    // and a reset must never wipe an app we do not own.
     expect(RESET_CONTAINERS.map((c) => c.container)).not.toContain(
       'contentools-configuration'
     );

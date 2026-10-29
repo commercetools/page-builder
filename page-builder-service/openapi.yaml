@@ -24,7 +24,7 @@ tags:
   - name: render
     description: Storefront render surface (authenticated by render key + origin allowlist)
   - name: admin
-    description: Merchant Center object gateway (authenticated by the forwarded Merchant Center JWT)
+    description: Merchant Center object gateway and media upload (authenticated by the forwarded Merchant Center JWT)
   - name: catalog
     description: Host catalog ingest (authenticated by the admin secret)
 
@@ -257,6 +257,71 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
 
+  /v1/admin/media:
+    get:
+      tags: [admin]
+      operationId: listMedia
+      summary: Browse uploaded media of one kind, newest first
+      description: |
+        One page of the files uploaded through this API, read from the media bucket and never cached.
+        Page with `nextCursor`; it is the bucket's own continuation token and only valid with the same `type`.
+        Answers 501 when media storage is not configured (`PB_MEDIA_BUCKET`).
+      security: [{ mcToken: [] }]
+      parameters:
+        - name: type
+          in: query
+          required: true
+          description: The kind to list. Images, videos, and everything else (for example PDFs).
+          schema: { $ref: '#/components/schemas/MediaKind' }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 24 }
+        - name: cursor
+          in: query
+          schema: { type: string, minLength: 1, maxLength: 2048 }
+      responses:
+        '200':
+          description: A page of files
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '501': { $ref: '#/components/responses/MediaNotConfigured' }
+        '502': { $ref: '#/components/responses/MediaStorageUnavailable' }
+    post:
+      tags: [admin]
+      operationId: uploadMedia
+      summary: Upload one file to the media bucket
+      description: |
+        `multipart/form-data` with the file in a part named `file`; only the first file is read and any other
+        part is ignored. The declared content type must be on the allowlist (`PB_MEDIA_ALLOWED_TYPES`) and
+        must match the file's own first bytes, so a renamed file is refused. The response carries the URL the
+        object is served from, which is what a page stores. The acting user is recorded in the audit log.
+        Answers 501 when media storage is not configured.
+      security: [{ mcToken: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: The stored file
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaUpload' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '413': { $ref: '#/components/responses/MediaTooLarge' }
+        '415': { $ref: '#/components/responses/MediaTypeRefused' }
+        '501': { $ref: '#/components/responses/MediaNotConfigured' }
+        '502': { $ref: '#/components/responses/MediaStorageUnavailable' }
+
 components:
   securitySchemes:
     renderKey:
@@ -341,6 +406,26 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
+    MediaNotConfigured:
+      description: Media storage is not configured on the service (`PB_MEDIA_BUCKET`)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    MediaStorageUnavailable:
+      description: The media bucket could not be reached; nothing was stored
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    MediaTooLarge:
+      description: The file is larger than `PB_MEDIA_MAX_BYTES`
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    MediaTypeRefused:
+      description: The content type is not allowed, or the file's bytes are not the type it declares
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
     CatalogInvalid:
       description: The catalog failed validation; every violation is listed and nothing was written
       content:
@@ -373,6 +458,41 @@ components:
         supported:
           type: array
           items: { $ref: '#/components/schemas/WireVersion' }
+
+    # ── Media ───────────────────────────────────────────────────────────────────
+    MediaKind:
+      type: string
+      enum: [image, video, file]
+
+    MediaUpload:
+      type: object
+      required: [url, key, name, size, contentType]
+      properties:
+        url: { type: string, format: uri, description: Where a browser reads the object from; this is the value a page stores }
+        key: { type: string, description: The object's key in the bucket }
+        name: { type: string, description: The last segment of the key }
+        size: { type: integer, minimum: 0 }
+        contentType: { type: string, description: The type the file's bytes were verified to be }
+
+    MediaFile:
+      type: object
+      required: [key, url, name]
+      properties:
+        key: { type: string }
+        url: { type: string, format: uri }
+        name: { type: string }
+        size: { type: integer, minimum: 0 }
+        contentType: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    MediaPage:
+      type: object
+      required: [files, nextCursor]
+      properties:
+        files:
+          type: array
+          items: { $ref: '#/components/schemas/MediaFile' }
+        nextCursor: { type: [string, 'null'], description: Pass as `cursor` for the next page; null on the last page }
 
     # ── Render tree ─────────────────────────────────────────────────────────────
     RenderResult:

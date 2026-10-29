@@ -191,6 +191,26 @@ describe('loadConfig', () => {
   });
 });
 
+describe('media configuration', () => {
+  const key = Buffer.from(JSON.stringify({ client_email: 'svc@p.iam', private_key: 'PEM' })).toString('base64');
+
+  it('is off by default', () => {
+    expect(loadConfig({}).media).toBeNull();
+  });
+
+  it('is read from PB_MEDIA_*', () => {
+    const c = loadConfig({ PB_MEDIA_BUCKET: 'media', PB_MEDIA_SERVICE_ACCOUNT_KEY_B64: key, PB_MEDIA_MAX_BYTES: '4096' });
+    expect(c.media).toMatchObject({ bucket: 'media', maxUploadBytes: 4096, pathPrefix: 'page-builder/media' });
+  });
+
+  it('is reported with every other problem, naming keys and never the credential', () => {
+    const list = problems({ ...PROD, PB_ADMIN_SECRET: '', PB_MEDIA_BUCKET: 'media', PB_MEDIA_SERVICE_ACCOUNT_KEY_B64: 'super-secret-not-a-key' });
+    expect(list).toContain('PB_ADMIN_SECRET is required in production');
+    expect(list.join()).toContain('PB_MEDIA_SERVICE_ACCOUNT_KEY_B64 is not base64');
+    expect(list.join()).not.toContain('super-secret');
+  });
+});
+
 describe('.env.example', () => {
   const parse = (text: string): Record<string, string> =>
     Object.fromEntries(

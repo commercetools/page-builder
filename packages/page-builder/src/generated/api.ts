@@ -126,6 +126,36 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Browse uploaded media of one kind, newest first
+         * @description One page of the files uploaded through this API, read from the media bucket and never cached.
+         *     Page with `nextCursor`; it is the bucket's own continuation token and only valid with the same `type`.
+         *     Answers 501 when media storage is not configured (`PB_MEDIA_BUCKET`).
+         */
+        get: operations["listMedia"];
+        put?: never;
+        /**
+         * Upload one file to the media bucket
+         * @description `multipart/form-data` with the file in a part named `file`; only the first file is read and any other
+         *     part is ignored. The declared content type must be on the allowlist (`PB_MEDIA_ALLOWED_TYPES`) and
+         *     must match the file's own first bytes, so a renamed file is refused. The response carries the URL the
+         *     object is served from, which is what a page stores. The acting user is recorded in the audit log.
+         *     Answers 501 when media storage is not configured.
+         */
+        post: operations["uploadMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -145,6 +175,37 @@ export interface components {
         UnsupportedWireVersion: {
             error: components["schemas"]["Error"]["error"];
             supported: components["schemas"]["WireVersion"][];
+        };
+        /** @enum {string} */
+        MediaKind: "image" | "video" | "file";
+        MediaUpload: {
+            /**
+             * Format: uri
+             * @description Where a browser reads the object from; this is the value a page stores
+             */
+            url: string;
+            /** @description The object's key in the bucket */
+            key: string;
+            /** @description The last segment of the key */
+            name: string;
+            size: number;
+            /** @description The type the file's bytes were verified to be */
+            contentType: string;
+        };
+        MediaFile: {
+            key: string;
+            /** Format: uri */
+            url: string;
+            name: string;
+            size?: number;
+            contentType?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        MediaPage: {
+            files: components["schemas"]["MediaFile"][];
+            /** @description Pass as `cursor` for the next page; null on the last page */
+            nextCursor: string | null;
         };
         RenderResult: {
             wireVersion: components["schemas"]["WireVersion"];
@@ -610,6 +671,42 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
+        /** @description Media storage is not configured on the service (`PB_MEDIA_BUCKET`) */
+        MediaNotConfigured: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description The media bucket could not be reached; nothing was stored */
+        MediaStorageUnavailable: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description The file is larger than `PB_MEDIA_MAX_BYTES` */
+        MediaTooLarge: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description The content type is not allowed, or the file's bytes are not the type it declares */
+        MediaTypeRefused: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
         /** @description The catalog failed validation; every violation is listed and nothing was written */
         CatalogInvalid: {
             headers: {
@@ -904,6 +1001,68 @@ export interface operations {
             403: components["responses"]["ContainerNotAllowed"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+        };
+    };
+    listMedia: {
+        parameters: {
+            query: {
+                /** @description The kind to list. Images, videos, and everything else (for example PDFs). */
+                type: components["schemas"]["MediaKind"];
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of files */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaPage"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            501: components["responses"]["MediaNotConfigured"];
+            502: components["responses"]["MediaStorageUnavailable"];
+        };
+    };
+    uploadMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The stored file */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaUpload"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            413: components["responses"]["MediaTooLarge"];
+            415: components["responses"]["MediaTypeRefused"];
+            501: components["responses"]["MediaNotConfigured"];
+            502: components["responses"]["MediaStorageUnavailable"];
         };
     };
 }

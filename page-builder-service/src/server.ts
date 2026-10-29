@@ -11,6 +11,7 @@ import type { Deps } from './app.js';
 import type { ServiceConfig } from './config.js';
 import { registerAdmin } from './routes/admin.js';
 import { registerCatalog } from './routes/catalog.js';
+import { registerMedia } from './routes/media.js';
 import { registerRender } from './routes/render.js';
 
 export interface ErrorBody {
@@ -74,7 +75,9 @@ function registerJsonParser(scope: FastifyInstance): void {
 
 function registerAdminOrUnavailable(scope: FastifyInstance, config: ServiceConfig, deps: Deps): void {
   if (config.mc && deps.mcKeys && config.ct) {
-    registerAdmin(scope, { mc: config.mc, projectKey: config.ct.projectKey, keys: deps.mcKeys, store: deps.store });
+    const { mc, ct } = config;
+    registerAdmin(scope, { mc, projectKey: ct.projectKey, keys: deps.mcKeys, store: deps.store });
+    registerMedia(scope, { mc, projectKey: ct.projectKey, keys: deps.mcKeys, media: deps.media });
     return;
   }
   scope.all('/v1/admin/*', async (_req, reply) =>

@@ -69,7 +69,7 @@ export function FieldInput({
     return <MediaField value={value} onChange={onChange} />;
   }
   if (kind === 'video') {
-    return <MediaField value={value} onChange={onChange} imagesOnly={false} />;
+    return <MediaField value={value} onChange={onChange} kind="video" />;
   }
   return (
     <TextInput

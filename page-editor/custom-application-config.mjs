@@ -26,15 +26,10 @@ const config = {
     },
   },
   additionalEnv: {
-    // Surfaced onto `context.environment.imagePickerBaseUrl`. The contentools media
-    // service base URL — it MUST include the service's `/service` path prefix and carry
-    // no trailing slash. Empty → `kind: 'image'` fields render a "not configured" note
-    // instead of the picker.
-    imagePickerBaseUrl: optionalEnv('IMAGE_PICKER_BASE_URL'),
-    // Namespaces media storage on the service (a path segment). Empty → 'default'.
-    imagePickerBusinessUnitKey: optionalEnv('IMAGE_PICKER_BUSINESS_UNIT_KEY'),
     // The page-builder service's public URL including its Connect path (e.g.
-    // https://service-….commercetools.app/service). Empty → every hook uses the MC GraphQL gateway.
+    // https://service-….commercetools.app/service). Empty → every hook uses the MC GraphQL gateway,
+    // and `kind: 'image'` / `kind: 'video'` fields show a "not set up" note instead of the media
+    // picker: uploads and the media library are served by this service (see its PB_MEDIA_* settings).
     pageBuilderServiceUrl: optionalEnv('PAGE_BUILDER_SERVICE_URL'),
     // Which hook families use the service: `all`, or a comma list of pages, page-components,
     // comments, workflows, page-workflow, preview-settings, data-sources, sections, components,
@@ -53,27 +48,21 @@ const config = {
         'https://*.netlify.app',
         'http://localhost:3000',
       ],
-      // `*.run.app` / `localhost:8080` reach the contentools media service directly — the image
-      // picker calls `media-library`, `upload-file` and `refresh-jwt` from the browser, not
-      // through the MC gateway proxy.
       'connect-src': [
         "'self'",
         'https://*.commercetools.com',
         'https://*.netlify.app',
         'http://localhost:3000',
-        'https://*.run.app',
-        'http://localhost:8080',
       ],
-      // The picker renders `<img>` for every media-library thumbnail and for the selected
-      // value, so the service's storage backend must be allowed. Which one applies depends on
-      // its STORAGE_TYPE (gcp / aws / cloudinary); the seeded hero image is on GCS.
+      // The media picker renders `<img>` for each library thumbnail and for the selected value.
+      // Uploads are stored in the service's Google Cloud Storage bucket and read from there
+      // (`https://storage.googleapis.com/<bucket>/…`). The upload itself is a call to the
+      // service through the MC API gateway, which `*.commercetools.com` already allows.
       'img-src': [
         "'self'",
         'data:',
         'https://*.commercetools.com',
         'https://storage.googleapis.com',
-        'https://*.amazonaws.com',
-        'https://res.cloudinary.com',
       ],
     },
   },

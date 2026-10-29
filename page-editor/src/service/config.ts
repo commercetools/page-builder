@@ -7,6 +7,8 @@
  *   pageBuilderServiceHooks  `all`, or a comma list of the feature names below (empty: none)
  *
  * The per-hook list lets the migration roll out (and roll back) one hook family at a time.
+ *
+ * Media uploads need only the URL, not a hook family: see `parseServiceEndpoint`.
  */
 
 export const SERVICE_FEATURES = [
@@ -25,20 +27,27 @@ export const SERVICE_FEATURES = [
 
 export type ServiceFeature = (typeof SERVICE_FEATURES)[number];
 
-export type ServiceConfig = {
+export type ServiceEndpoint = {
   /** Origin of the service, no trailing slash and no path. */
   origin: string;
   /** Path prefix of the service (its Connect endpoint), no trailing slash. */
   basePath: string;
+};
+
+export type ServiceConfig = ServiceEndpoint & {
   features: ReadonlySet<ServiceFeature>;
 };
 
 const text = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
 
-export function parseServiceConfig(
+/**
+ * Where the service is, independent of which hook families use it. `null` when no (valid) URL is
+ * configured. Features that are not custom-object hooks — media uploads — need only this.
+ */
+export function parseServiceEndpoint(
   env: Record<string, unknown> | undefined
-): ServiceConfig | null {
+): ServiceEndpoint | null {
   const raw = text(env?.pageBuilderServiceUrl);
   if (!raw) return null;
 
@@ -48,6 +57,14 @@ export function parseServiceConfig(
   } catch {
     return null;
   }
+  return { origin: url.origin, basePath: url.pathname.replace(/\/+$/, '') };
+}
+
+export function parseServiceConfig(
+  env: Record<string, unknown> | undefined
+): ServiceConfig | null {
+  const endpoint = parseServiceEndpoint(env);
+  if (!endpoint) return null;
 
   const hooks = text(env?.pageBuilderServiceHooks);
   const names =
@@ -61,9 +78,5 @@ export function parseServiceConfig(
   );
   if (features.size === 0) return null;
 
-  return {
-    origin: url.origin,
-    basePath: url.pathname.replace(/\/+$/, ''),
-    features,
-  };
+  return { ...endpoint, features };
 }

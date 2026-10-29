@@ -7,6 +7,8 @@
  * and allowlist are optional and an unset one skips that check.
  */
 
+import { loadMediaConfig, type MediaConfig } from './media/config.js';
+
 export interface CtConfig {
   projectKey: string;
   clientId: string;
@@ -36,6 +38,8 @@ export interface ServiceConfig {
   adminSecret: string | undefined;
   /** Merchant Center JWT verification for the admin API; null disables `/v1/admin/*`. */
   mc: McConfig | null;
+  /** Google Cloud Storage for uploaded media (`PB_MEDIA_*`); null leaves the media routes answering 501. */
+  media: MediaConfig | null;
   /** Seconds to cache commercetools reads for; 0 disables the cache. */
   cacheTtlSeconds: number;
   /** Attribute names to offer as facets, in order; empty derives them from product types. */
@@ -210,6 +214,7 @@ export function loadConfig(rawEnv: Record<string, string | undefined> = process.
   const editorOrigins = origins(env.PB_EDITOR_ORIGINS, 'PB_EDITOR_ORIGINS', problems);
   const facetLimit = parseFacetLimit(env, problems);
   const mc = loadMc(env, problems);
+  const media = loadMediaConfig(env, problems);
   const renderKey = env.PB_RENDER_KEY || undefined;
   const adminSecret = env.PB_ADMIN_SECRET || undefined;
 
@@ -230,6 +235,7 @@ export function loadConfig(rawEnv: Record<string, string | undefined> = process.
     editorOrigins,
     adminSecret,
     mc,
+    media,
     cacheTtlSeconds,
     facetAttributes: list(env.PB_FACET_ATTRIBUTES),
     facetLimit,

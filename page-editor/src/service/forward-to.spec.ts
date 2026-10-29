@@ -81,6 +81,36 @@ describe('createForwardRequest', () => {
     expect(init.headers['content-type']).toBe('application/json');
   });
 
+  it('sends a FormData body as it is, leaving the content type to the browser', async () => {
+    const fetchImpl = reply(201, { key: 'k' });
+    run(fetchImpl);
+    const body = new FormData();
+    body.append('file', new File(['x'], 'a.png', { type: 'image/png' }));
+
+    const result = await createForwardRequest(config)({
+      method: 'POST',
+      path: '/v1/admin/media',
+      body,
+    });
+
+    expect(result).toEqual({ status: 201, json: { key: 'k' } });
+    const [url, init] = fetchImpl.mock.calls[0] as unknown as [
+      string,
+      RequestInit & { headers: Record<string, string> }
+    ];
+    expect(url).toBe('https://mc-api.test/proxy/forward-to');
+    expect(init.method).toBe('POST');
+    // Same object: re-serialising it would lose the file.
+    expect(init.body).toBe(body);
+    expect(Object.keys(init.headers).map((h) => h.toLowerCase())).not.toContain(
+      'content-type'
+    );
+    expect(execute.mock.calls[0][1].forwardToConfig).toEqual({
+      uri: 'https://svc.example.com/service/v1/admin/media',
+      audiencePolicy: 'forward-url-origin',
+    });
+  });
+
   it('hands back non-2xx statuses for the link to interpret', async () => {
     run(reply(409, { error: { code: 'conflict' } }));
     expect(
