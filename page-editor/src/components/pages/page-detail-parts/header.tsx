@@ -123,10 +123,6 @@ export const PageDetailHeader = ({
           </Flex>
         </Box>
         <Flex gap={8} flexShrink={0}>
-          <Button variant="outline" size="xs" bg="neutral.1" onPress={() => {}}>
-            <Icon name="Visibility" size={14} color="neutral.11" />
-            {intl.formatMessage(messages.preview)}
-          </Button>
           <Button
             variant="solid"
             colorPalette="primary"

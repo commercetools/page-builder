@@ -11,6 +11,7 @@ import {
   FormField,
   LoadingSpinner,
   MultilineTextInput,
+  PasswordInput,
   Switch,
   TextInput,
 } from '@commercetools/nimbus';
@@ -251,6 +252,7 @@ const PreviewSettingsDialog = ({
             <FormField.Input>
               <TextInput
                 {...bind(opts.baseUrlKey)}
+                isReadOnly={!values.enabled}
                 placeholder={opts.baseUrlPlaceholder}
               />
             </FormField.Input>
@@ -261,7 +263,10 @@ const PreviewSettingsDialog = ({
           <FormField.Root>
             <FormField.Label>{label('previewSettingsToken')}</FormField.Label>
             <FormField.Input>
-              <TextInput {...bind(opts.tokenKey)} />
+              <PasswordInput
+                {...bind(opts.tokenKey)}
+                isReadOnly={!values.enabled}
+              />
             </FormField.Input>
           </FormField.Root>
         </Flex>
@@ -291,6 +296,32 @@ const PreviewSettingsDialog = ({
                 )}
               </Alert.Root>
             )}
+            <FormField.Root>
+              <FormField.Label>
+                {label('previewSettingsLocales')}
+              </FormField.Label>
+              <FormField.Input>
+                <TextInput
+                  {...bind('localesText')}
+                  placeholder="en-us, en-gb, de-de"
+                />
+              </FormField.Input>
+              <FormField.Description>
+                {label('previewSettingsLocalesHelp')}
+              </FormField.Description>
+            </FormField.Root>
+
+            <FormField.Root>
+              <FormField.Label>
+                {label('previewSettingsDefaultLocale')}
+              </FormField.Label>
+              <FormField.Input>
+                <TextInput {...bind('defaultLocale')} placeholder="en-us" />
+              </FormField.Input>
+            </FormField.Root>
+
+            <PreviewSettingsRoutes bind={bind} label={label} />
+
             <Flex direction="column" gap={100}>
               <Switch
                 isSelected={values.enabled}
@@ -336,32 +367,6 @@ const PreviewSettingsDialog = ({
                 })}
               </Flex>
             </Flex>
-
-            <FormField.Root>
-              <FormField.Label>
-                {label('previewSettingsLocales')}
-              </FormField.Label>
-              <FormField.Input>
-                <TextInput
-                  {...bind('localesText')}
-                  placeholder="en-us, en-gb, de-de"
-                />
-              </FormField.Input>
-              <FormField.Description>
-                {label('previewSettingsLocalesHelp')}
-              </FormField.Description>
-            </FormField.Root>
-
-            <FormField.Root>
-              <FormField.Label>
-                {label('previewSettingsDefaultLocale')}
-              </FormField.Label>
-              <FormField.Input>
-                <TextInput {...bind('defaultLocale')} placeholder="en-us" />
-              </FormField.Input>
-            </FormField.Root>
-
-            <PreviewSettingsRoutes bind={bind} label={label} />
 
             <Flex direction="column" gap={300}>
               <Box as="span" fontSize={350} fontWeight={600} color="neutral.12">

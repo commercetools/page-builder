@@ -19,7 +19,7 @@ export default defineMessages({
   },
   previewSettings: {
     id: 'Pages.previewSettings',
-    defaultMessage: 'Preview settings',
+    defaultMessage: 'Settings',
   },
   previewSettingsSaved: {
     id: 'Pages.previewSettingsSaved',
@@ -53,7 +53,7 @@ export default defineMessages({
   },
   openInPageBuilder: {
     id: 'Pages.openInPageBuilder',
-    defaultMessage: 'Open in page builder',
+    defaultMessage: 'Edit',
   },
   // About card
   aboutThisPage: {

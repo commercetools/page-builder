@@ -888,7 +888,7 @@ export default defineMessages({
   // Preview settings dialog
   previewSettingsDialogTitle: {
     id: 'PageBuilder.previewSettings.dialogTitle',
-    defaultMessage: 'Preview settings',
+    defaultMessage: 'Settings',
   },
   previewSettingsLoadFailed: {
     id: 'PageBuilder.previewSettings.loadFailed',

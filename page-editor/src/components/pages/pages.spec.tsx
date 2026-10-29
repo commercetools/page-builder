@@ -93,7 +93,7 @@ describe('Pages dashboard', () => {
       await screen.findByRole('button', { name: /New page/ })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Preview settings/ })
+      screen.getByRole('button', { name: /^Settings$/ })
     ).toBeInTheDocument();
   });
 
@@ -226,7 +226,7 @@ describe('Pages preview settings', () => {
   it('opens the preview settings dialog', async () => {
     const { user } = setup();
     await user.click(
-      await screen.findByRole('button', { name: /Preview settings/ })
+      await screen.findByRole('button', { name: /^Settings$/ })
     );
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });

@@ -221,10 +221,6 @@ const Pages = () => {
               <Icon name="Tune" size={14} color="neutral.11" />
               {intl.formatMessage(messages.previewSettings)}
             </Button>
-            <Button variant="outline" size="xs" onPress={() => {}}>
-              <Icon name="Upload" size={14} color="neutral.11" />
-              {intl.formatMessage(messages.import)}
-            </Button>
             <Button
               variant="solid"
               colorPalette="primary"
