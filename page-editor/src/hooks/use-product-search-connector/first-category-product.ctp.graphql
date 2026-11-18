@@ -1,0 +1,18 @@
+query FirstCategoryProduct($query: SearchQueryInput!, $locale: Locale!) {
+  productsSearch(query: $query, limit: 1) {
+    results {
+      product {
+        id
+        masterData {
+          current {
+            slug(locale: $locale)
+            masterVariant {
+              id
+              sku
+            }
+          }
+        }
+      }
+    }
+  }
+}

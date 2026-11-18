@@ -1,0 +1,11 @@
+query FetchComponentInstances($container: String!, $where: String!, $limit: Int!) {
+  customObjects(container: $container, where: $where, limit: $limit) {
+    results {
+      id
+      key
+      container
+      version
+      value
+    }
+  }
+}

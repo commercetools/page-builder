@@ -1,0 +1,7 @@
+{
+  // Build-only view of the sources. Specs run under Vitest from source and must not
+  // be emitted into `dist`, which is what `files` publishes to npm. `tsconfig.json`
+  // stays inclusive so `typecheck` and the editor still cover the specs.
+  "extends": "./tsconfig.json",
+  "exclude": ["src/**/*.spec.ts", "src/**/*.spec.tsx", "src/test-utils"]
+}

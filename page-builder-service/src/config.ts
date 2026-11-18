@@ -1,0 +1,298 @@
+/**
+ * Typed service configuration, read once at startup from the environment.
+ *
+ * Fails fast: every missing/invalid value is reported in a single error so a bad deploy
+ * is fixed in one pass. Production (`NODE_ENV=production`) requires the CT credentials,
+ * render key, render-origin allowlist and admin secret; outside production the render key
+ * and allowlist are optional and an unset one skips that check.
+ */
+
+import { loadMediaConfig, type MediaConfig } from './media/config.js';
+
+export interface CtConfig {
+  projectKey: string;
+  clientId: string;
+  clientSecret: string;
+  authUrl: string;
+  apiUrl: string;
+  /**
+   * `CTP_SCOPE`, passed to the token endpoint as it is. Unset sends no scope, so commercetools issues
+   * the token with whatever scopes the API client itself has: the service never assumes any.
+   */
+  scopes: string | undefined;
+}
+
+export interface ServiceConfig {
+  production: boolean;
+  port: number;
+  host: string;
+  /** URL prefix every route is mounted under: always `BASE_PATH`. Only tests override it. */
+  basePath: string;
+  logLevel: 'debug' | 'info' | 'warn' | 'error' | 'silent';
+  ct: CtConfig | null;
+  /** `PB_PREVIEW_TOKEN` — preview and edit are gated on a match; unset closes the feature. */
+  previewToken: string | undefined;
+  /** `PB_RENDER_KEY` — presented by the shim on render calls. */
+  renderKey: string | undefined;
+  /** Server origins allowed to call the render API (`PB_RENDER_ORIGINS`). */
+  renderOrigins: string[];
+  /** Merchant Center origins the bridge may talk to (`PB_EDITOR_ORIGINS`). */
+  editorOrigins: string[];
+  /** `PB_ADMIN_SECRET` — bearer token for catalog push/publish. */
+  adminSecret: string | undefined;
+  /** Merchant Center JWT verification for the admin API; null disables `/v1/admin/*`. */
+  mc: McConfig | null;
+  /**
+   * `PB_DEV_TOKEN` — local development only. Lets the Merchant Center app dev server call the admin
+   * API directly (the gateway's `forward-to` cannot reach a service on localhost). Never set in production.
+   */
+  devToken: string | undefined;
+  /** Google Cloud Storage for uploaded media (`PB_MEDIA_*`); null leaves the media routes answering 501. */
+  media: MediaConfig | null;
+  /** Seconds to cache commercetools reads for; 0 disables the cache. */
+  cacheTtlSeconds: number;
+  /** Attribute names to offer as facets, in order; empty derives them from product types. */
+  facetAttributes: string[];
+  /** Maximum derived facets when `facetAttributes` is empty. */
+  facetLimit: number;
+}
+
+export interface McConfig {
+  /** The MC API Gateway URL that issues the forwarded JWTs. */
+  issuer: string;
+  /** This service's public origin, as the gateway puts it in the JWT `aud` claim. */
+  audience: string;
+}
+
+/**
+ * The Connect `endpoint` of this application (`connect.yaml`). Connect does not strip it from the
+ * URL, so every route is mounted under it; it is fixed, not configurable.
+ */
+export const BASE_PATH = '/service';
+
+export class ConfigError extends Error {
+  constructor(readonly problems: string[]) {
+    super(`Invalid page-builder service configuration:\n${problems.map((p) => `  - ${p}`).join('\n')}`);
+    this.name = 'ConfigError';
+  }
+}
+
+const CT_KEYS = [
+  'CTP_PROJECT_KEY',
+  'CTP_CLIENT_ID',
+  'CTP_CLIENT_SECRET',
+  'CTP_AUTH_URL',
+  'CTP_API_URL',
+] as const;
+
+/**
+ * Connect's conventional configuration names (`CTP_REGION`, `CTP_SCOPE`) are accepted as
+ * aliases: the region derives the auth/API URLs unless those are set explicitly.
+ */
+function withConnectAliases(
+  env: Record<string, string | undefined>
+): Record<string, string | undefined> {
+  const region = env.CTP_REGION;
+  return {
+    ...env,
+    CTP_AUTH_URL: env.CTP_AUTH_URL || (region ? `https://auth.${region}.commercetools.com` : undefined),
+    CTP_API_URL: env.CTP_API_URL || (region ? `https://api.${region}.commercetools.com` : undefined),
+    CTP_SCOPES: env.CTP_SCOPES || env.CTP_SCOPE,
+  };
+}
+
+const LOG_LEVELS = ['debug', 'info', 'warn', 'error', 'silent'] as const;
+
+const list = (value: string | undefined): string[] =>
+  (value ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+/** Cloud identifier → MC API Gateway URL (`@commercetools-backend/express` `MC_API_URLS`). */
+const MC_ISSUERS: Record<string, string> = {
+  'gcp-au': 'https://mc-api.australia-southeast1.gcp.commercetools.com',
+  'gcp-eu': 'https://mc-api.europe-west1.gcp.commercetools.com',
+  'gcp-us': 'https://mc-api.us-central1.gcp.commercetools.com',
+  'aws-eu': 'https://mc-api.eu-central-1.aws.commercetools.com',
+  'aws-us': 'https://mc-api.us-east-2.aws.commercetools.com',
+};
+
+const trimSlash = (url: string): string => url.replace(/\/+$/, '');
+
+function parseOrigin(raw: string, name: string, problems: string[]): string | null {
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error('scheme');
+    return url.origin;
+  } catch {
+    problems.push(`${name}: "${raw}" is not an http(s) origin`);
+    return null;
+  }
+}
+
+function origins(value: string | undefined, name: string, problems: string[]): string[] {
+  return list(value)
+    .map((raw) => parseOrigin(raw, name, problems))
+    .filter((o): o is string => o !== null);
+}
+
+type Env = Record<string, string | undefined>;
+
+function parsePort(env: Env, problems: string[]): number {
+  const portRaw = env.PORT ?? '8080';
+  const port = Number(portRaw);
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    problems.push(`PORT: "${portRaw}" is not a valid port`);
+  }
+  return port;
+}
+
+function parseCacheTtl(env: Env, problems: string[]): number {
+  const ttlRaw = env.PB_CACHE_TTL_SECONDS ?? '15';
+  const cacheTtlSeconds = Number(ttlRaw);
+  if (!Number.isFinite(cacheTtlSeconds) || cacheTtlSeconds < 0) {
+    problems.push(`PB_CACHE_TTL_SECONDS: "${ttlRaw}" must be a number >= 0`);
+  }
+  return cacheTtlSeconds;
+}
+
+function parseLogLevel(env: Env, problems: string[]): ServiceConfig['logLevel'] {
+  const logLevel = (env.LOG_LEVEL ?? 'info') as ServiceConfig['logLevel'];
+  if (!LOG_LEVELS.includes(logLevel)) {
+    problems.push(`LOG_LEVEL: "${env.LOG_LEVEL}" must be one of ${LOG_LEVELS.join(', ')}`);
+  }
+  return logLevel;
+}
+
+function parseFacetLimit(env: Env, problems: string[]): number {
+  const facetLimitRaw = env.PB_FACET_LIMIT ?? '8';
+  const facetLimit = Number(facetLimitRaw);
+  if (!Number.isInteger(facetLimit) || facetLimit < 0) {
+    problems.push(`PB_FACET_LIMIT: "${facetLimitRaw}" must be an integer >= 0`);
+  }
+  return facetLimit;
+}
+
+/**
+ * A scope names its project: `<scope>:<project-key>`, optionally followed by a store key. One for any
+ * other project can never be granted to this client, and commercetools answers it with an opaque
+ * "Permissions exceeded" on the first request; say so at start-up instead.
+ */
+function scopesForOtherProjects(scopes: string | undefined, projectKey: string): string[] {
+  return (scopes ?? '')
+    .split(/\s+/)
+    .filter((scope) => scope.split(':').length > 1 && scope.split(':')[1] !== projectKey);
+}
+
+function loadCt(env: Env, production: boolean, problems: string[]): CtConfig | null {
+  const missingCt = CT_KEYS.filter((k) => !env[k]);
+  if (missingCt.length === 0) {
+    const scopes = env.CTP_SCOPES?.trim() || undefined;
+    for (const scope of scopesForOtherProjects(scopes, env.CTP_PROJECT_KEY!)) {
+      problems.push(`CTP_SCOPE: "${scope}" is for another project than CTP_PROJECT_KEY "${env.CTP_PROJECT_KEY}"; use the scopes of this project's API client`);
+    }
+    return {
+      projectKey: env.CTP_PROJECT_KEY!,
+      clientId: env.CTP_CLIENT_ID!,
+      clientSecret: env.CTP_CLIENT_SECRET!,
+      authUrl: trimSlash(env.CTP_AUTH_URL!),
+      apiUrl: trimSlash(env.CTP_API_URL!),
+      scopes,
+    };
+  }
+  if (production || missingCt.length < CT_KEYS.length) {
+    // Partially-set credentials are always a mistake, even in development.
+    problems.push(`commercetools credentials incomplete, missing: ${missingCt.join(', ')}`);
+  }
+  return null;
+}
+
+function requireProductionSettings(
+  renderKey: string | undefined,
+  renderOrigins: string[],
+  adminSecret: string | undefined,
+  problems: string[]
+): void {
+  if (!renderKey) problems.push('PB_RENDER_KEY is required in production');
+  if (renderOrigins.length === 0) problems.push('PB_RENDER_ORIGINS is required in production');
+  if (!adminSecret) problems.push('PB_ADMIN_SECRET is required in production');
+}
+
+export function loadConfig(rawEnv: Record<string, string | undefined> = process.env): ServiceConfig {
+  const env = withConnectAliases(rawEnv);
+  const problems: string[] = [];
+  const production = env.NODE_ENV === 'production';
+
+  const port = parsePort(env, problems);
+  const cacheTtlSeconds = parseCacheTtl(env, problems);
+  const logLevel = parseLogLevel(env, problems);
+  const ct = loadCt(env, production, problems);
+  const renderOrigins = origins(env.PB_RENDER_ORIGINS, 'PB_RENDER_ORIGINS', problems);
+  const editorOrigins = origins(env.PB_EDITOR_ORIGINS, 'PB_EDITOR_ORIGINS', problems);
+  const facetLimit = parseFacetLimit(env, problems);
+  const mc = loadMc(env, problems);
+  const media = loadMediaConfig(env, problems);
+  const renderKey = env.PB_RENDER_KEY || undefined;
+  const adminSecret = env.PB_ADMIN_SECRET || undefined;
+  const devToken = loadDevToken(env, production, editorOrigins, problems);
+
+  if (production) requireProductionSettings(renderKey, renderOrigins, adminSecret, problems);
+
+  if (problems.length > 0) throw new ConfigError(problems);
+
+  return {
+    production,
+    port,
+    host: env.HOST ?? '0.0.0.0',
+    basePath: BASE_PATH,
+    logLevel,
+    ct,
+    previewToken: env.PB_PREVIEW_TOKEN || undefined,
+    renderKey,
+    renderOrigins,
+    editorOrigins,
+    adminSecret,
+    mc,
+    devToken,
+    media,
+    cacheTtlSeconds,
+    facetAttributes: list(env.PB_FACET_ATTRIBUTES),
+    facetLimit,
+  };
+}
+
+function loadDevToken(env: Record<string, string | undefined>, production: boolean, editorOrigins: string[], problems: string[]): string | undefined {
+  const token = env.PB_DEV_TOKEN?.trim();
+  if (!token) return undefined;
+  // It replaces Merchant Center sign-in on the admin API, so a deployed service must never accept it.
+  if (production) {
+    problems.push('PB_DEV_TOKEN must not be set in production: it replaces Merchant Center sign-in on the admin API');
+    return undefined;
+  }
+  if (editorOrigins.length === 0) {
+    problems.push('PB_DEV_TOKEN requires PB_EDITOR_ORIGINS, the origin of the Merchant Center app dev server (e.g. http://localhost:3001)');
+  }
+  return token;
+}
+
+function loadMc(env: Record<string, string | undefined>, problems: string[]): McConfig | null {
+  const issuerRaw = env.PB_MC_ISSUER?.trim();
+  if (!issuerRaw) return null;
+  // Connect provides the service's public URL; locally a developer sets it. The Merchant Center
+  // puts its origin in the JWT audience, so the origin is all that is used.
+  const serviceUrl = env.CONNECT_SERVICE_URL?.trim();
+  if (!serviceUrl) {
+    problems.push('PB_MC_ISSUER requires CONNECT_SERVICE_URL, the service\'s public URL (set by Connect; set it yourself for local development)');
+    return null;
+  }
+  const issuer = MC_ISSUERS[issuerRaw] ?? trimSlash(issuerRaw);
+  try {
+    new URL(issuer);
+  } catch {
+    problems.push(`PB_MC_ISSUER: "${issuerRaw}" is neither a cloud identifier nor a URL`);
+    return null;
+  }
+  const audience = parseOrigin(serviceUrl, 'CONNECT_SERVICE_URL', problems);
+  return audience ? { issuer, audience } : null;
+}

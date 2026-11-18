@@ -1,0 +1,264 @@
+---
+name: integrate-page-builder
+description: Use when the user wants to add the page builder (service, Merchant Center page editor and a client renderer) to a real client application on a commercetools project — a storefront, a mobile app or any other front end. Triggers - "integrate the page builder", "add the page editor to <project>", "deploy the page-builder service", "connect my storefront or app to the page builder", "make this app's pages editable in Merchant Center". Walks the whole path in order - deploy the service and the Merchant Center app, decide the client's contract, define the component vocabulary, render, publish the catalog, configure preview, author pages, verify, operate. Client-agnostic; web (Next.js) specifics are in references/.
+version: 0.1.0
+---
+
+# Integrate the page builder into a client application
+
+The page builder has three parts. Only the third is yours to build per client.
+
+| Part | What it is | Where it lives |
+|---|---|---|
+| **Service** | Reads pages, resolves data, serves the render tree, ingests the catalog, gates preview | Deployed once per commercetools project (Connect) |
+| **Merchant Center app** | Where authors compose and publish pages | Deployed once per commercetools project (Connect + MC registration) |
+| **Client renderer** | Asks the service for a page, draws it with the client's own components | Inside each client app (web, mobile, ...) |
+
+The client holds no commercetools credentials, no data resolvers and no storage logic. It draws what the service returns.
+
+> **Status: v0.1, drafted from the platform's own contracts and a read-only look at one real storefront.** It has not yet been walked end to end on a real project. Where a real integration teaches something, record it under [Integration log](#integration-log) and fix the step.
+
+## The steps
+
+**Platform: once per commercetools project**
+
+1. **Deploy the page-builder service.** Outcome: a reachable service URL plus the secrets the other parts need.
+2. **Deploy the Merchant Center app and point it at the service.** Outcome: authors can open the page editor.
+3. **Prove the platform works before touching the client.** Outcome: known-good baseline; an empty project answers "no page", not an error.
+
+**Client: once per client app**
+
+4. **Decide the client's contract with the platform.** Outcome: written decisions on page types and URLs, markets, failure behavior and origins.
+5. **Define the vocabulary.** Outcome: a validated catalog of configurable and placeable components, data sources, sections and theme that matches the client's design system.
+6. **Build the renderer.** Outcome: the client fetches a render tree for the current location and draws it, with distinct handling for "no page" and "failure".
+7. **Implement the components the catalog names.** Outcome: every catalog type has a client component; placeable ones wrap what the client already renders.
+8. **Publish the catalog.** Outcome: authors see the palette. Order: validate, deploy the client, push, publish.
+9. **Configure preview and the two-way framing and origin allowlists.** Outcome: authors preview drafts (and, on web, edit in place) inside Merchant Center.
+10. **Author and publish the first pages.** Outcome: each page type has a published default composition, and the first content pages are live.
+11. **Verify end to end.** Outcome: published, preview, failure and latency behavior all checked against real data.
+12. **Make it routine.** Outcome: the pipeline, secret rotation and upgrade path are written down and automated.
+
+Steps 8 and 10 **write into the customer's commercetools project**. Show what will be written and get an explicit yes first.
+
+## Ground rules
+
+- **Intent before code.** For each step know what must be true afterwards; the commands and files are in `references/` and in the repos.
+- **The client stays thin.** If you are about to add a commercetools client, a resolver or a cache to the client app for the page builder, stop: that belongs in the service. Wrapping code the client already has (its own data loading, cart, availability) in a placeable component is fine; see [Component modes](#component-modes).
+- **One owner per catalog.** Exactly one client pushes the catalog of a given commercetools project; two would overwrite each other.
+- **Order is load-bearing.** Deploy the client before pushing a catalog that names its components. Register the MC app before deploying it. Know every client origin before deploying the MC app (it is baked into its CSP).
+- **Deploys and registrations are the owner's.** Deploying to Connect and registering the Merchant Center app are done by the project owner, who has the credentials. The agent prepares the inputs, gives exact values and checks the result; it does not deploy or register.
+- **Secrets never go in chat, commits or screenshots.** Generate them, put them in the platform's secret store and the client's CI secrets.
+- **Distinguish "no page" from "failure"** everywhere in the client. They need different screens and different monitoring.
+
+---
+
+## Component modes
+
+Not every component an author can use is "configurable". Decide the mode of each one; it drives its catalog entry and its implementation.
+
+| Mode | What the author controls | Examples | Catalog entry |
+|---|---|---|---|
+| **Configurable** | The content: text, images, links, data bindings | Banner, hero, rich text, a product or category picker | Fields, including data-source fields |
+| **Placeable** | Only whether it is on the page, where, and on which devices. It renders what the page already renders | Listing facets, sort control, pagination, breadcrumb, a product page's buy box | No fields, limited to the page types where it makes sense |
+| **Hybrid** | Presentation settings over data that arrives from elsewhere | Product listing tiles (data from the page; settings such as items per row, show price, show swatches), a carousel | A few fields (toggles, counts, selects); data arrives through a data source or a route-driven slice |
+
+A placeable or hybrid component gets its data one of two ways:
+
+- **From the platform**, through a route-driven slice in the canonical shapes. Best when the contract carries everything the piece needs.
+- **From the client's own pipeline**: it wraps the piece the client already has, with that piece's own data loading, URL handling, session, cart and availability. Best when the piece owns behavior the contract does not carry. **Wrap, do not rebuild.**
+
+Consequence: a transactional page (listing, product detail) is not a special case. It is a composition of placeable and configurable pieces. Its default arrangement reproduces today's page, and authors then add configurable blocks (a banner above the listing) around it.
+
+---
+
+## Step details
+
+Each step: what and why, what to decide, when it is done, what bites.
+
+### 1. Deploy the page-builder service
+
+**Intent.** One service per commercetools project is the only thing that touches the page-builder data. It serves the render API to clients, ingests the catalog from CI and exposes an object gateway to the MC app.
+
+**Decide**
+- Deployment type. A sandbox deployment scales to zero and cold-starts in about 15 s, longer than a client's render budget (2 s by default). Use a production-type deployment for anything shoppers touch.
+- Region: the project's region.
+- Source: a git repository with a release tag that Connect can stage (the connector lives in the page-builder repository, which has `connect.yaml` at its root). See the `commercetools-connect` skill for the CLI mechanics (stage, publish, deploy, redeploy).
+- Secrets: a **render key** (clients present it), a **preview token** (unlocks drafts), an **admin secret** (catalog push from CI). Generate each randomly.
+- Allowlists: the server origins of every client (render origins) and the Merchant Center origin of the project's region (editor origins).
+
+**Facts to respect**
+- commercetools access comes from a platform-generated API client with least-privilege scopes (custom-object write plus product, category and store read). Nobody creates a client by hand.
+- Product Search must be activated on the project; the service does not use the legacy search.
+- Connect does not strip the application's endpoint from the URL, so every route lives under that path prefix. The service URL clients use **includes** it.
+- The Merchant Center JWT audience is the service's own public origin. The service takes it from the deployed URL Connect provides, so there is no audience to configure. Config changes are a redeploy, never delete and recreate.
+
+**Done when** the liveness route answers under the endpoint path, a render call without credentials is rejected, and the service log shows no start-up configuration problems.
+
+**Watch out.** A service reached at the wrong path looks "healthy" at the root but 404s for every client call. Check the full URL a client will use.
+
+Details: [references/platform.md](references/platform.md).
+
+### 2. Deploy the Merchant Center app and point it at the service
+
+**Intent.** The editor authors use. It talks to the service, not to commercetools custom objects, so authors need no custom-object permissions.
+
+**Decide**
+- The entry-point path and cloud region (must match the project; unique per region).
+- Which hook families go through the service. Start with all; the setting exists so a rollout can be staged or rolled back per family.
+- **Every client origin that will be previewed inside the editor** (production, staging, local development). The MC app's content-security policy must list them as frame sources; adding one later means a redeploy, so collect them in step 4 first.
+- Which teams get view and manage permissions.
+
+**Order of operations.** Register the custom application in Merchant Center with a placeholder URL, take its id, deploy via Connect with the id, entry path and region, read the deployed URL, then update the registration with it. The service must trust this app's gateway: its issuer (`PB_MC_ISSUER`) matches the project region; the audience is the service's own deployed URL (step 1).
+
+**Done when** the app appears in the menu for a permitted user, the Pages screen loads, and the service log shows authenticated gateway calls succeeding (not 401, not 403).
+
+**Watch out.** A forwarded call that is rejected as "wrong audience" almost always means the editor forwarded to a URL that is not the service's deployed URL.
+
+Details: [references/platform.md](references/platform.md).
+
+### 3. Prove the platform works
+
+**Intent.** Establish a baseline so later failures are attributable to the client work, not the platform.
+
+**Check**
+- Liveness under the endpoint path.
+- A render call with the render key and an allowed origin on an empty project answers **404 with the code for "no page"**. That is the healthy empty state. Any other 404 means a wrong URL or path prefix.
+- The MC app loads and its palette is empty (no catalog yet).
+- Latency of a render call on the production-type deployment, against the client's budget.
+
+**Done when** all four hold and the URL, keys and origins are recorded somewhere the client's CI can read them. Nothing has been written to the project yet.
+
+### 4. Decide the client's contract with the platform
+
+**Intent.** The platform is generic; these decisions make it fit this client. Write them down before building.
+
+**First, inventory the client (read-only).** Before deciding, read the client for the things that constrain the integration: its routes and which pages are native today; how markets and locales appear in URLs and in sessions; its security headers (can it be framed?); any access gate or login wall in front of it; its architecture and lint rules (what components may import, how links and colors are done); where its content comes from today; its build and deploy pipeline and whether it is in a separate repository from the page builder.
+
+**Decide**
+- **Adoption scope.** Which existing pages become page-builder driven, and in what order. Any page can adopt, including listing and product pages, because they are compositions of placeable pieces that wrap what the client already renders plus configurable blocks (see [Component modes](#component-modes)). The risk is how much of a native page you rebuild, not which page it is, so adopt by wrapping. A content-led page (home, a landing page) is still a good first proof because it needs the least wrapping.
+- **Page types and URL scheme.** Which of home, category listing, product detail and free-form content pages the client has, and the path template of each. The service uses the same templates to map a path to a page, so the client's navigation must produce exactly those paths.
+- **Markets.** How the client derives locale, currency, country and (optionally) the commercetools store key for every request. Check that "store" means a commercetools store: some clients use the word for a pickup or collection location, which is not what the render call's `store` is. Omit it when the client does not scope its catalog by commercetools store.
+- **URL casing and the locale segment.** Whether the locale in the URL matches the locale value the service receives and whether route templates keep a locale placeholder.
+- **Which surfaces are page-builder driven.** Whole screens, or regions of otherwise native screens (common on mobile).
+- **Failure behavior.** What the shopper sees when there is no page (a real "not found") versus when the service is down or slow (a degraded but usable screen). Budget a short timeout; never let the service block the whole screen.
+- **Origins.** Every environment's origin, for the service allowlists (step 1) and the MC frame sources (step 2).
+
+**Done when** the decisions are written in the client's own docs and the allowlists in steps 1 and 2 contain every origin.
+
+### 5. Define the vocabulary
+
+**Intent.** The catalog is the contract between what developers can render and what authors can place. The client owns it.
+
+**Decide**
+- **Components and their mode.** Inventory the design system's real building blocks and, for each native page, the pieces it is made of. Give each a mode: configurable, placeable or hybrid. Model what an editor varies, not every prop. Each gets a stable type key, its fields (none for a placeable one), the sections and page types it may appear in, and a group for the palette.
+- **Dependencies between pieces.** Pieces of one page often share state (a listing's facets, sort, pagination and tiles share the URL parameters). Decide what happens when an author removes one, places it twice, or places it on a page type it does not belong to: it must degrade quietly (render nothing), never break the page. Restrict each piece to the page types where it makes sense.
+- **Data sources.** What dynamic data components can bind to (product lists, category lists, a product, ...). Each names a service-side resolver kind; the client never resolves data.
+- **Route-driven pieces.** Pieces whose data comes from the URL expose named slices (price, gallery, facets, ...). Decide, per piece, whether it takes a slice from the platform or wraps the client's own implementation.
+- **Sections and theme.** The named regions of a page and the tokens that map to the design system (container width, gaps, section backgrounds).
+
+**Done when** the catalog file validates (the service checks structure and references, and reports every violation at once).
+
+### 6. Build the renderer
+
+**Intent.** One place in the client turns the current location plus market into a drawn page.
+
+**Responsibilities**
+1. Build the request: current path, market, and the query string exactly as received (preview and edit flags and listing filters ride on it).
+2. Authenticate to the service with the render key, and identify the client's origin (server-side calls have no browser origin).
+3. Send the contract's wire version, and handle "upgrade required" by degrading and reporting.
+4. Apply a short timeout.
+5. Classify the outcome into **ok**, **no page** (the service's own "no page" answer only) and **failure** (timeout, network, rejected credentials, wrong URL, bad response, server error). A bare 404 without the "no page" code is a misconfiguration, not a missing page.
+6. Draw the tree: sections, rows, cells, using the client's own layout primitives, honoring the contract's breakpoints and per-device hiding.
+7. Do not cache page content in the client; the service caches reads briefly.
+
+**Done when** each outcome has its own screen and the failure path is logged with its reason.
+
+Platform-neutral contract: [references/render-contract.md](references/render-contract.md). Web: use the shim ([references/web-nextjs.md](references/web-nextjs.md)), including how it reaches a client that lives in a different repository. Other platforms implement the contract directly.
+
+### 7. Implement the components the catalog names
+
+**Intent.** Each catalog type becomes a client component receiving already localized data.
+
+**Do**
+- Read and follow the client's own conventions first (its link component, design tokens, accessibility and lint rules, import boundaries). Authored components are ordinary client code and must pass the same gates.
+- Map every type key to a component. Unknown types must fail soft (skip and log), not crash the page.
+- Consume data in the service's canonical shapes (product card, product detail, category node, search result). Do not re-fetch from commercetools.
+- **Placeable components wrap what the client already renders.** They take no settings from the author. Reuse the client's existing component and its data path (URL parameters, its own data loading, session); do not duplicate it. Each must work wherever it is placed, and render nothing when its context is missing.
+- **Hybrid components** receive data (from a data source or a route-driven slice) and apply the author's presentation settings; the data is never the author's to edit.
+- Implement the route-driven pieces that take platform slices using those slices; a slice may be absent, so each piece degrades.
+- Own empty, loading and error states per component.
+- Links and images come from fields; resolve link targets with the client's router so navigation stays native.
+- On web, mark editable text so the visual editor can edit in place (inert for shoppers). Native clients skip this.
+
+**Done when** every type in the published catalog renders with sample data and with missing optional fields.
+
+### 8. Publish the catalog
+
+**Intent.** Make the vocabulary visible to authors, safely.
+
+**Order.** Validate on every change request (writes nothing) → deploy the client → push (writes a draft; repeating is a no-op) → publish (the go-live gate). Pushing before the client is deployed would let authors place a component the live client cannot draw.
+
+**Do** wire the three calls into the client's pipeline using the admin secret from the CI secret store. The skill ships a dependency-free script for them, [`scripts/catalog.mjs`](scripts/catalog.mjs): copy it into the client's repository. **Confirm with the user before the first push**: it writes into the project.
+
+**Done when** the MC palette lists the components, data sources and sections, and reading the catalog back shows the published state.
+
+### 9. Configure preview and the allowlists
+
+**Intent.** Authors see drafts in the real client, inside Merchant Center.
+
+**Do**
+- In the editor's preview settings set: enabled, base URL per environment, the shared draft token (equal to the service's preview token), locales, the route templates from step 4, a sample product for product-page previews, the home page id.
+- The client must forward its full query string to the service (it carries the draft flag, the page id and the edit flag).
+- The client must **allow being framed** by Merchant Center (frame-ancestors or the platform equivalent) for the project's region.
+- The MC app's frame sources (step 2) and the service's editor origins (step 1) must include the client's origin and the MC origin respectively.
+- **Check what stands between the frame and the page.** Clients often forbid framing by default (`frame-ancestors` none, `X-Frame-Options` deny) and may put an access gate or login in front of the site. A gate that relies on a cookie does not work inside a cross-site frame, so decide how preview passes it (for example a preview request carrying the draft token bypasses the gate, or preview targets an environment with no gate).
+- Visual editing (selecting, reordering and editing in place) uses a browser message protocol and DOM markers, so it is **web only**. Native clients get draft preview through the same flags but no in-place editing.
+
+**Done when** opening a page from the editor shows the draft in a frame; a wrong token shows the published page.
+
+### 10. Author and publish the first pages
+
+**Intent.** Content exists, authored by the people who will own it.
+
+**Do**
+- Author in the Merchant Center editor a **default composition** per page type: the placeable pieces arranged as the native page is today (listing: breadcrumb, facets, sort, tiles, pagination; product page: gallery, price, buy box, description). Then the content pages and the first configurable blocks around them. Save as draft, preview, publish.
+- **Confirm before writing anything on the author's behalf.**
+
+**Done when** each page type renders for real paths in the client from published content.
+
+### 11. Verify end to end
+
+**Check**
+- Every page type, every market, desktop and small screen.
+- **Parity:** a page with the default composition matches the native page it replaces (layout, behavior, URLs, analytics hooks).
+- **Composition changes:** remove each placeable piece in turn, reorder them, and place one twice: the page still works and nothing breaks.
+- Draft preview with the token; a wrong token shows the published page; edit mode (web).
+- **Failure modes on purpose:** service stopped → degraded screen, not "not found"; a path with no page → real "not found"; a wrong service URL → a logged error, not a silent "not found".
+- Latency of the render call at p95 against the client budget, measured on the production-type deployment.
+- A real shopper path never exposes preview flags or tokens.
+- Accessibility of authored output (headings, alt text from image fields).
+
+**Done when** the checks pass against real data and the results are in the client's docs.
+
+### 12. Make it routine
+
+- **Pipeline order:** deploy client → push catalog → publish catalog; validate on change requests.
+- **Secrets:** how the render key, preview token and admin secret are rotated (a render key change needs the service and every client updated together).
+- **Upgrades:** the wire version is negotiated; an old client against a newer service degrades and logs. Plan service-then-client upgrades.
+- **Observability:** where service logs are read; the client logs failure reasons.
+- **Ownership:** who owns the catalog, who authors pages, who holds the secrets.
+
+---
+
+## Integration log
+
+Append what each real integration teaches. Format: date, project type, step, what happened, what the step should say now.
+
+- **2026-10-27, user guidance during the first integration, steps 4, 5, 7, 10, 11.** The skill had called listing and product pages the riskiest swap because their system components replace native behavior. The user's correction: components are not all configurable. Some are only **placeable** (facets, sort, pagination: the author decides if they are on the page, not what they say), some are **hybrid** (listing tiles take data but also presentation settings), and some are **configurable** (a banner). A transactional page is a composition of these, so it can adopt incrementally by wrapping what already exists. Added the [Component modes](#component-modes) section and the matching decisions, implementation rules, default compositions and parity checks.
+- **2026-10-26, web storefront (Next.js, locale-prefixed URLs, access gate), read-only inventory, steps 4 and 9.**
+  - The client's security headers forbid framing entirely. Step 9 must change them for the environments used for preview.
+  - A cookie-based access gate sits in front of the site, so the editor's frame would hit the gate. Step 9 now says to decide how preview passes it.
+  - The client's lint and architecture rules restrict component imports and require its own link component and design tokens. Step 7 now says to read them first.
+  - Home, category and product pages exist natively; the client has its own cart and pricing flow. Step 4 now has "adoption scope": start with home and content pages, keep product and listing pages native.
+  - The word "store" in the client means a pickup location, not a commercetools store. Step 4 now says to check, and to omit `store` otherwise.
+  - The client and the page-builder repository are separate repositories, so a local file link does not resolve in the client's CI. See web-nextjs.md.
