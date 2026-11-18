@@ -1,7 +1,7 @@
 import { createDirectRequest } from './direct';
 
 const config = { origin: 'http://localhost:8080', basePath: '/service' };
-const TOKEN = 'dev-editor-token-1234';
+const TOKEN = 'fake-dev-editor-token-1234';
 
 const reply = (status: number, body: unknown) =>
   jest.fn(async () => ({

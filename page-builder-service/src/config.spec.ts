@@ -213,7 +213,7 @@ describe('loadConfig', () => {
 });
 
 describe('local development token', () => {
-  const token = 'dev-editor-token-1234';
+  const token = 'fake-dev-editor-token-1234';
   const origins = { PB_EDITOR_ORIGINS: 'http://localhost:3001' };
 
   it('is off unless configured', () => {

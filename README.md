@@ -38,6 +38,7 @@ Pages, and saved data source instances, still follow the same **draft → publis
 
 - [Getting started](#getting-started)
 - [Development](#development)
+- [Deploy to Connect](#deploy-to-connect)
 - [Domain model](#domain-model)
 - [Pages view](#pages-view)
 - [Page Builder](#page-builder)
@@ -57,7 +58,7 @@ yarn install
 yarn start
 ```
 
-The app is served at `http://localhost:3001` by default.
+The app is served at `http://localhost:3001` by default. To run it for real in your project, see [Deploy to Connect](#deploy-to-connect).
 
 ---
 
@@ -74,6 +75,38 @@ All dev commands run from the `page-editor/` directory:
 | `yarn test` | Jest tests |
 | `yarn test:service` | The same suite with every hook family routed through the page-builder service transport |
 | `yarn format` | Prettier |
+
+---
+
+## Deploy to Connect
+
+[`connect.yaml`](connect.yaml) at the repo root declares both runtime pieces as commercetools Connect applications, so one connector deploys the whole thing:
+
+| Application | Type | What it is |
+|---|---|---|
+| `page-builder-service` | `service` (endpoint `/service`) | Render API, catalog ingest and the Merchant Center object gateway. Connect generates its API client at install time (scopes `manage_key_value_documents view_products view_categories view_stores`), so no commercetools credentials are configured by hand. |
+| `page-editor` | `merchant-center-custom-application` | The editor, served inside the Merchant Center. |
+
+**Deploy the service first.** The editor needs the service's public URL, which exists only once the service is running.
+
+1. **Create a connector from this repository** in your commercetools organization and start a deployment for your project. A sandbox deployment is fine to try it out, but it scales to zero and cold starts in about 15 seconds. Use a production-type deployment for a storefront.
+2. **Configure `page-builder-service`.** Every key, its default and what it does is in the [service README](page-builder-service/README.md#configuration). The ones you must set:
+   - `PB_RENDER_KEY` (secured): the key your storefront presents on render calls.
+   - `PB_ADMIN_SECRET` (secured): the bearer secret your CI uses to push the catalog.
+   - `PB_RENDER_ORIGINS`: the storefront server origins allowed to call the render API.
+   - `PB_EDITOR_ORIGINS`: the Merchant Center origin(s) allowed to drive the visual editor. It defaults to the `gcp-eu` Merchant Center.
+   - `PB_MC_ISSUER`: your Merchant Center API gateway (`gcp-eu`, `gcp-us`, `gcp-au`, `aws-eu` or `aws-us`). Without it the editor cannot reach the service through the gateway.
+   - Optional: `PB_PREVIEW_TOKEN` turns on draft preview, and `PB_MEDIA_BUCKET` with `PB_MEDIA_SERVICE_ACCOUNT_KEY_B64` turns on image and video uploads (see [Images and videos](#images-and-videos)).
+3. **Note the service URL** Connect gives the deployment. The service is mounted under `/service`, and the editor needs that path included.
+4. **Configure `page-editor`:**
+   - `CUSTOM_APPLICATION_ID`: the id the Merchant Center returns when you register the custom application.
+   - `ENTRY_POINT_URI_PATH`: the entry point path (default `page-editor`).
+   - `CLOUD_IDENTIFIER`: one of `gcp-us`, `gcp-eu`, `aws-us`, `aws-eu` (default `gcp-eu`).
+   - `PAGE_BUILDER_SERVICE_URL`: the URL from step 3, including `/service`. For the first deployment of the editor, before you have the service URL, use a dummy value and redeploy once you do. Left empty, the editor keeps every hook on the Merchant Center GraphQL gateway and the media upload field is off.
+   - `PAGE_BUILDER_SERVICE_HOOKS`: `all`, or a comma list of the hook families that should go through the service (see [Merchant Center app and the service](#merchant-center-app-and-the-service)).
+5. **Wire up the storefront and CI** by following [Wire it up](#wire-it-up): install the shim, mount it, and push the catalog after each deploy.
+
+The service has no `postDeploy` or `preUndeploy` script and registers nothing in your project (no Extensions, Subscriptions, Types or Channels), so undeploying removes nothing from commercetools. Your pages and catalog are custom objects and stay in place. Logs are structured JSON; read them with `commercetools connect deployment logs --key <deployment> --application page-builder-service`.
 
 ---
 
@@ -286,7 +319,7 @@ Step by step, for any client (web or native): [the integration guide](skills/int
 
 ### Wire it up
 
-1. **Deploy the service** to the project (Connect application `page-builder-service`, endpoint `/service`). Set `PB_RENDER_KEY`, `PB_RENDER_ORIGINS`, `PB_PREVIEW_TOKEN`, `PB_ADMIN_SECRET`, `PB_EDITOR_ORIGINS`, and the API client (`CTP_*`, scope `manage_key_value_documents view_products view_categories view_stores`). Details and verification steps: [`page-builder-service/README.md`](page-builder-service/README.md).
+1. **Deploy the service** to the project, as in [Deploy to Connect](#deploy-to-connect) (Connect application `page-builder-service`, endpoint `/service`). Set `PB_RENDER_KEY`, `PB_RENDER_ORIGINS`, `PB_PREVIEW_TOKEN`, `PB_ADMIN_SECRET`, `PB_EDITOR_ORIGINS`, and the API client (`CTP_*`, scope `manage_key_value_documents view_products view_categories view_stores`). Details and verification steps: [`page-builder-service/README.md`](page-builder-service/README.md).
 2. **Install the shim** — `npm i @commercetools-labs/page-builder` — and set `PB_SERVICE_URL`, `PB_RENDER_KEY`, `PB_ORIGIN`.
 3. **Mount it** in a catch-all route, passing the request path, the shopper's market (`locale`, `currency`, `country`, `store`) and `searchParams`.
 4. **Map components** — each catalog `type` to a React component taking `{ data }`; use `PBText` for inline-editable text.
@@ -367,6 +400,8 @@ page-editor/                  # Merchant Center Custom Application (the webapp)
 
 packages/
   page-builder/                # @commercetools-labs/page-builder 1.0 — the storefront shim (see Host integration)
+
+connect.yaml                   # Connect deployment: page-editor (MC custom app) + page-builder-service
 
 page-builder-service/          # The per-project Connect service: render, catalog ingest, MC object gateway
   openapi.yaml                 # The /v1 API; shim and service types are generated from it

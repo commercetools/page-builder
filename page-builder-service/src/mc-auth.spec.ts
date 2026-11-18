@@ -48,7 +48,7 @@ describe('mcAuth', () => {
 });
 
 describe('development token', () => {
-  const token = 'dev-editor-token-1234';
+  const token = 'fake-dev-editor-token-1234';
   const url = '/v1/admin/objects/page-editor/nope';
   const withToken = { devToken: token };
 

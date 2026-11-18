@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { testApp } from './testing/fixtures.js';
 
-const token = 'dev-editor-token-1234';
+const token = 'fake-dev-editor-token-1234';
 const origin = 'http://localhost:3001';
 const dev = { devToken: token, editorOrigins: [origin] };
 const preflight = (url: string, from = origin) => ({

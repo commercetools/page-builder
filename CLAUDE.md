@@ -1,16 +1,22 @@
 # Claude Code Configuration
 
-Read `AGENTS.md` for full project context. This package is part of the monorepo
-— see the root `AGENTS.md` for monorepo-wide commands and conventions.
+Read `AGENTS.md` for the working context (units, commands, gotchas, testing) and `README.md` for
+what the project is and how it deploys.
 
 ## Rules
 - Never run `git commit` or `git push` without explicit user instruction.
-- Before implementing any UI component, always check the Nimbus MCP (`nimbus`) for the correct component API, props, and variants.
-- Before writing any commercetools GraphQL query or mutation, always check the CT developer MCP (`commercetools-developer`) for the correct schema, type names, and API best practices.
+- Run commands from the unit you are changing (`page-editor/`, `page-builder-service/`,
+  `packages/page-builder/`); there is no root manifest.
+- Never lower a coverage threshold to make a change pass; add tests.
+- Never put secrets, customer names or internal hostnames in code, docs, fixtures or commit messages.
+- If the `nimbus` MCP server is available, check it for the component API, props and variants before
+  implementing any UI component.
+- If the `commercetools-developer` MCP server is available, check it for the schema, type names and
+  best practices before writing any commercetools GraphQL query or mutation.
 
 ## React UI
-When writing React UI code:
-- Use the Nimbus MCP server to look up component APIs before using any component.
+When writing React UI code in `page-editor/`:
+- Look up a Nimbus component's API before using it.
 - Never use plain HTML elements; always find an equivalent Nimbus component. When in doubt, fall back to `Box`.
 - Always use style-props (via the `css` prop or Nimbus/Chakra system props); do not write plain CSS.
 - Always try to use a design-system token; use custom values only when no fitting token exists.

@@ -8,7 +8,7 @@ jest.mock('./forward-to', () => ({ createForwardRequest: jest.fn() }));
 const direct = jest.fn();
 const forward = jest.fn();
 const config = { origin: 'http://localhost:8080', basePath: '/service' };
-const withToken = { ...config, devToken: 'dev-editor-token-1234' };
+const withToken = { ...config, devToken: 'fake-dev-editor-token-1234' };
 
 const env = process.env as Record<string, string | undefined>;
 const nodeEnv = env.NODE_ENV;
@@ -28,7 +28,7 @@ describe('serviceRequestFor', () => {
     expect(serviceRequestFor(withToken)).toBe(direct);
     expect(createDirectRequest).toHaveBeenCalledWith(
       withToken,
-      'dev-editor-token-1234'
+      'fake-dev-editor-token-1234'
     );
     expect(createForwardRequest).not.toHaveBeenCalled();
   });

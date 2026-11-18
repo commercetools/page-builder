@@ -1,104 +1,108 @@
-# Custom Application Template Starter (TypeScript)
+# Page builder (commercetools-labs)
 
-See root `AGENTS.md` for monorepo-wide context.
+Read [README.md](README.md) for what this is and how it is deployed. This file is the working
+context for people and agents changing the code.
 
 ## Purpose
 
-TypeScript starter template for Merchant Center Custom Applications, used both as living documentation and as the source directory that `create-mc-app` copies to scaffold new projects.
+A page builder for headless storefronts on commercetools: authors compose pages in a Merchant
+Center custom application from components the developers define, and a storefront draws them
+through a small service. Reference code (MIT, unsupported), published as commercetools-labs.
 
-## Key Context
+## The three units
 
-- This is a fully functional Custom Application -- it includes routes, components, hooks, i18n, tests, type definitions, and config files.
-- `create-mc-app` clones this directory verbatim (minus `CHANGELOG.md`) into the user's new project. Every file, config, and directory name matters.
-- Dependencies use `workspace:*` protocol in the monorepo, which pnpm's publish pipeline replaces with pinned versions in the published tarball.
-- Has additional directories not in the JS starter: `@types/`, `@types-extensions/`, `schemas/`, and a `tsconfig.json`.
-- Typechecked from the monorepo root via `pnpm typecheck:starter:custom-applications`.
+Three independently built units, no root manifest. Run every command from the unit's own
+directory.
 
-## How To Work Here
+| Unit | Package | Tooling | What it is |
+|---|---|---|---|
+| `page-editor/` | `@commercetools-labs/pages-editor` | yarn, Jest | The Merchant Center custom application (Pages view, Page Builder canvas) |
+| `page-builder-service/` | `@commercetools-labs/page-builder-service` | npm, Vitest | The per-project Connect service: render API, catalog ingest, Merchant Center object gateway |
+| `packages/page-builder/` | `@commercetools-labs/page-builder` | npm, Vitest | The storefront shim (`<PageBuilder/>`, React/Next.js) |
 
-This template has its own scripts that mirror a standalone app:
+Also in the repo: `docs/sdd/` (wire contracts shared by all three), `skills/integrate-page-builder/`
+(integration guide for client apps), and [`connect.yaml`](connect.yaml), which deploys
+`page-editor` and `page-builder-service` as Connect applications.
+
+## How to work here
 
 ```sh
-pnpm --filter @commercetools-applications/merchant-center-template-starter-typescript run start
-pnpm --filter @commercetools-applications/merchant-center-template-starter-typescript run test
-pnpm --filter @commercetools-applications/merchant-center-template-starter-typescript run build
-pnpm --filter @commercetools-applications/merchant-center-template-starter-typescript run typecheck
+cd page-editor && yarn start        # http://localhost:3001
+cd page-editor && yarn typecheck && yarn lint && yarn test
+cd page-builder-service && npm run dev:fake   # in-memory commercetools, no credentials
+cd page-builder-service && npm test && npm run typecheck
+cd packages/page-builder && npm install --legacy-peer-deps && npm test
 ```
-
-The monorepo root also exposes convenience scripts: `pnpm template-custom-application-starter-typescript:start`, `pnpm template-custom-application-starter-typescript:build`.
 
 ## Gotchas
 
-- Every file in this directory becomes part of the scaffolded output. Adding internal-only files (e.g. workspace tooling config, monorepo-specific scripts) will leak into end-user projects.
-- The TypeScript starter must stay in sync with `starter` (JS) -- feature changes should be mirrored in both templates.
-- This package is `private: true` and not published to npm directly. It is distributed via `create-mc-app`'s git-clone mechanism.
+- **Contracts live in `docs/sdd/`.** A change to a wire format (definitions, preview/bridge,
+  canonical shapes) changes the doc, the service, the shim and the editor together.
+- **The HTTP API is `page-builder-service/openapi.yaml`.** Service and shim types are generated from
+  it (`npm run generate:api` in each); a test fails when the generated file drifts.
+- **`catalog.schema.json` exists twice** (`packages/page-builder/` and the service). Edit the shim's
+  and run `npm run sync:schema` in the service; a test fails if they differ.
+- **The service is the only holder of commercetools credentials.** The storefront never reads the
+  custom objects; the editor reaches them through the service (or the MC GraphQL gateway when
+  `PAGE_BUILDER_SERVICE_URL` is empty).
+- **Page data lives in `page-editor*` custom objects**, schema v2/v3 with `draft.versions[]` (capped at 50)
+  and `published`. The host catalog objects are read-only in the editor.
+- **`PAGE_BUILDER_SERVICE_*` are build-time settings** of the editor. `PB_DEV_TOKEN` /
+  `PAGE_BUILDER_SERVICE_DEV_TOKEN` are development-only on both sides and must never reach production.
+- **Keep `connect.yaml` and the READMEs in step** when a configuration key is added or changed:
+  `connect.yaml`, the table in `page-builder-service/README.md`, and `page-editor/.env.example`.
+- **Never commit secrets, API clients or project-specific values.** `.env` files are git-ignored; add
+  placeholders to the `.env.example` next to them. No customer names or internal hostnames in code,
+  docs, fixtures or commit messages: the repo goes through the commercetools-labs publish gate.
 
 ## Testing
 
-Four independently-built units, each with its own runner, its own coverage report and its
-own gate. There is no root manifest — `page-editor` installs with yarn, the others with npm —
-so every command below is run from that unit's directory.
+Each unit has its own runner, coverage report and gate. CI (when present) runs typecheck, tests and
+coverage per unit on every pull request.
 
-| Unit | Runner | Test | Coverage |
-|---|---|---|---|
-| `page-editor/` | Jest (`jest-preset-mc-app`) | `yarn test`, and `yarn test:service` (see below) | `yarn test:coverage` |
-| `page-builder-service/` | Vitest | `npm test` | `npm run test:coverage` |
-| `packages/page-builder/` (the shim) | Vitest | `npm test` | `npm run test:coverage` |
+| Unit | Test | Coverage |
+|---|---|---|
+| `page-editor/` | `yarn test`, and `yarn test:service` | `yarn test:coverage` |
+| `page-builder-service/` | `npm test` | `npm run test:coverage` |
+| `packages/page-builder/` | `npm test` | `npm run test:coverage` |
 
-`.github/workflows/ci.yml` runs typecheck + tests (+ coverage) for each as a matrix on every pull
-request and on pushes to `main` and `builder`. Typed clients are generated from
-`page-builder-service/openapi.yaml`; the service and shim each have a test that fails when the
-generated file drifts (`npm run generate:api`). `catalog.schema.json` exists twice (shim package,
-service) and a service test fails if they differ (`npm run sync:schema` in the service).
+The service and shim run against an in-memory commercetools, so no credentials are needed.
 
 ### Two transports in `page-editor`
 
-The page-builder data hooks talk to commercetools custom objects either through the Merchant Center
-GraphQL gateway (default) or through the page-builder service (`src/service/`). The suite must pass
-both ways: `yarn test` and `yarn test:service` (`PB_TEST_TRANSPORT=service`, which routes every hook
-family through an in-process stand-in for the service's object gateway, backed by the same MSW store).
+The data hooks talk to commercetools custom objects either through the Merchant Center GraphQL
+gateway (default) or through the page-builder service (`src/service/`). The suite must pass both ways:
+`yarn test` and `yarn test:service` (`PB_TEST_TRANSPORT=service`, which routes every hook family
+through an in-process stand-in for the service's object gateway, backed by the same MSW store).
 Failure injection (`failOperation`, `networkErrorOn`) is honoured by both. A test that sets
 `environment` itself controls the transport and is not overridden.
 
 ### The coverage floors only ever move up
 
-Each unit declares a `coverageThreshold` (Jest) / `coverage.thresholds` (Vitest) in its own
-config. **Raise them when coverage improves; never lower one to make a change pass.** If a
-change cannot meet the floor, it needs tests, not a smaller number. Statements and lines are
-held at the 85% target; branches and functions sit lower on purpose, because branch coverage
-on provider-heavy React costs far more than it detects.
-
-Coverage counts the whole source tree, not just files a test imports. Exclusions are limited
-to files with no hand-written behaviour — generated CT types, i18n data, `messages.ts`
-catalogues, `.d.ts` declarations, re-export barrels and the test utilities.
+Each unit declares a `coverageThreshold` (Jest) / `coverage.thresholds` (Vitest) in its own config.
+**Raise them when coverage improves; never lower one to make a change pass.** If a change cannot
+meet the floor, it needs tests, not a smaller number. Statements and lines are held at the 85%
+target; branches and functions sit lower on purpose. Coverage counts the whole source tree;
+exclusions are limited to files with no hand-written behaviour (generated types, i18n data,
+`messages.ts`, `.d.ts`, re-export barrels, test utilities).
 
 ### Shared test harness (`page-editor/src/test-utils/`)
 
-- **`render.tsx`** — `renderWithProviders` / `renderHookWithProviders`. Wraps the MC
-  application shell together with the Nimbus providers the app mounts in `entry-point.tsx`,
-  and returns userEvent as `user` (the shell's own user fixture is re-exposed as `appUser`).
-- **`msw/`** — an in-memory commercetools custom-object store behind MSW handlers. Seed it,
-  render, then assert on what the store holds. `onUnhandledRequest: 'error'`, so a request
-  no handler covers fails the test by name instead of silently returning nothing.
-- **`factories/`** — builders for page documents, layout elements, catalogs, preview
-  settings and the org directory, each taking a partial override.
+- **`render.tsx`**: `renderWithProviders` / `renderHookWithProviders`, wrapping the MC application
+  shell and the Nimbus providers; returns userEvent as `user` (the shell's own user as `appUser`).
+- **`msw/`**: an in-memory custom-object store behind MSW handlers. Seed it, render, assert on what
+  the store holds. `onUnhandledRequest: 'error'`.
+- **`factories/`**: builders for page documents, layout elements, catalogs, preview settings and the
+  org directory, each taking a partial override.
 
 ### Things that will trip you up
 
-- **`renderWithProviders` suspends.** It returns "Loading…" synchronously, so every
-  assertion must `await` (`findBy*`, or `waitFor`).
-- **Hover is `fireEvent.mouseOver`, not `user.hover`** — React synthesizes `onMouseEnter`
-  from a root-level `mouseover`, and `mouseenter` does not bubble to a parent handler.
-- **Row actions are hidden with `pointer-events: none`, not unmounted.** userEvent refuses
-  to click them, which is the honest way to assert "not available yet".
-- **Chakra compiles style props into classes** — there is no inline `transform` to assert
-  on; compare the generated class between states.
-- **Nimbus icons are `aria-hidden`** — identify one by its `<path d="…">` glyph rather than
-  by DOM position.
-- **Nimbus `NumberInput` reports its value on blur, not per keystroke** — type, press
-  Enter, *then* move focus.
-- **A component reading `useParams` needs a matching `<Route>`** — setting `route:` alone
-  leaves the param undefined.
-
-`jest-preset-mc-app.config.js` silences two third-party console messages (MSW's simulated
-network errors and Nimbus `Tabs`' empty `href`); everything else still fails the test.
+- **`renderWithProviders` suspends.** It returns "Loading…" synchronously, so every assertion must
+  `await` (`findBy*`, or `waitFor`).
+- **Hover is `fireEvent.mouseOver`, not `user.hover`.**
+- **Row actions are hidden with `pointer-events: none`, not unmounted**, so userEvent refuses to
+  click them.
+- **Chakra compiles style props into classes**: compare generated classes, not inline styles.
+- **Nimbus icons are `aria-hidden`**: identify one by its `<path d="…">`.
+- **Nimbus `NumberInput` reports on blur**: type, press Enter, then move focus.
+- **A component reading `useParams` needs a matching `<Route>`.**
