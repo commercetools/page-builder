@@ -1,413 +1,249 @@
+> **commercetools Labs, unsupported.** Freely available reference code under the MIT license, shared as-is
+> and not covered by commercetools support. See [SUPPORT.md](SUPPORT.md) and [LICENSE](LICENSE).
+
 # Page builder
 
-> **commercetools-labs.** Reference code we are glad to share: freely available under the MIT licence, provided as-is and not covered by commercetools support. See [SUPPORT.md](SUPPORT.md).
+Let content and merchandising teams build storefront pages themselves, inside the Merchant Center, from
+components your developers define.
 
-Storefront pages are usually built by developers and changed by developers. Every new landing page, seasonal campaign or reordered homepage becomes a ticket and a release, even though the people who know what the page should say are in content and merchandising.
+Storefront pages are usually built by developers and changed by developers. Every new landing page, seasonal
+campaign or reordered homepage becomes a ticket and a release, even though the people who know what the page
+should say are in content and merchandising.
 
-The page builder lets those teams assemble and publish pages themselves, inside the Merchant Center they already use, **from components your developers define and control**. Authors drag approved building blocks onto a canvas, bind them to live commercetools data such as product lists and categories, preview the draft in the real storefront, and publish. Developers keep ownership of the design system and of what is allowed on a page.
+The page builder lets those teams assemble and publish pages on their own. Authors drag approved building
+blocks onto a canvas, bind them to live commercetools data such as product lists and categories, preview the
+draft in the real storefront, and publish. Developers keep ownership of the design system and of what is
+allowed on a page.
 
-It is made for teams that run a headless storefront on commercetools and want content-led pages (home, landing, category and product templates) without giving authors a way to break the site.
+It is made for teams that run a headless storefront on commercetools and want content-led pages (home,
+landing, category and product templates) without giving authors a way to break the site. It installs once per
+commercetools project through commercetools Connect.
 
-What you get when it works:
-
-- A **Page Editor** in the Merchant Center with a page tree, a drag-and-drop canvas, draft and publish, version history and live preview.
-- A small **service** (a commercetools Connect application) that is the only thing touching the stored pages. It resolves data into clean, localized shapes and serves a ready-to-draw page to your storefront.
-- A thin **storefront integration** (a React shim, or the HTTP contract for any other client) that draws the page with your own components. The storefront needs no commercetools credentials and no data-fetching code for these pages.
-
-This repo serves two audiences:
-
-- **Content/platform teams running this app** — see [Getting started](#getting-started) onward.
-- **Storefront engineers integrating the rendering SDK** — see [Host integration](#host-integration).
+| I want to | Read |
+|---|---|
+| Use the editor | [docs/using-the-editor.md](docs/using-the-editor.md) |
+| Understand how it works | [docs/architecture.md](docs/architecture.md) |
+| Deploy it with Connect | [docs/connect-deployment.md](docs/connect-deployment.md) |
+| Connect my storefront | [docs/host-integration.md](docs/host-integration.md), step by step in [skills/integrate-page-builder](skills/integrate-page-builder/SKILL.md) |
+| Define components, data sources and sections | [docs/catalogs.md](docs/catalogs.md) |
+| See how pages are stored | [docs/data-model.md](docs/data-model.md) |
+| Run, test and change the code | [docs/development.md](docs/development.md), [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Look up a service configuration key, scope or failure mode | [page-builder-service/README.md](page-builder-service/README.md) |
+| Use the storefront package | [packages/page-builder/README.md](packages/page-builder/README.md) |
+| Read the wire contracts and the HTTP API | [docs/sdd/](docs/sdd/README.md), [openapi.yaml](page-builder-service/openapi.yaml) |
 
 ## Overview
 
-The app has two main areas:
+The project has three parts. Two are Connect applications described by one [`connect.yaml`](connect.yaml);
+the third is an npm package your storefront installs.
 
-| Area | Route | Purpose |
-|---|---|---|
-| **Pages** | `/pages` | Browse the page tree, inspect per-page builder status, and open the builder |
-| **Page Builder** | `/builder/:pageId` | Drag-and-drop canvas for composing a page from layout sections, components, and data sources |
+| Part | Folder | Runs as | What it is |
+|---|---|---|---|
+| `page-editor` | [page-editor/](page-editor) | Connect `merchant-center-custom-application` | The editor: a page tree, a drag-and-drop canvas, drafts, version history, live preview and publishing |
+| `page-builder-service` | [page-builder-service/](page-builder-service/README.md) | Connect `service`, endpoint `/service` | Turns a published page into a ready-to-draw render tree, ingests the catalog from CI, and is the editor's only way to the stored pages |
+| `@commercetools-labs/page-builder` | [packages/page-builder/](packages/page-builder/README.md) | npm package in your storefront | One `<PageBuilder>` mount that draws the page with your own React components |
 
-There is no in-app editor for component types, data source types, or section presets — those catalogs are authored in the host's catalog file and pushed to the page-builder service by CI (see [Catalogs](#catalogs-components-data-sources-sections) and [Host integration](#host-integration)). This app only reads the *published* catalog to populate the Page Builder's palette, data-source picker, and section options.
+What you get:
 
-Pages, and saved data source instances, still follow the same **draft → publish** pattern: every save appends to a version history inside that object's custom object; publishing updates the same object's `published` field, which is what the storefront reads.
+- **Pages authors can own.** A page tree that mixes static pages, category pages, product detail templates
+  with per-category overrides, and dynamic pages, each with a draft, a version history and a publish step.
+- **A vocabulary developers control.** Components, their editable fields, data sources and page sections are
+  declared in a catalog file in your storefront repo and pushed by CI. Authors can only use what it allows.
+- **Live commerce data.** Components bind to data sources such as product lists and categories; the service
+  resolves them into clean, localized shapes, so your components get data, not queries.
+- **Real preview and in-place editing.** The editor shows the draft in your actual storefront and lets authors
+  click an element on the page to edit it.
+- **A storefront with no commercetools credentials** and no data-fetching code for these pages.
+- **Optional media uploads** to a Google Cloud Storage bucket for image and video fields.
 
----
+## What it is not
 
-## Table of contents
+- It is not supported by commercetools (see the banner above).
+- It does not render your storefront. Your components draw the page; the page builder decides which components,
+  in what order, with what content and data.
+- It does not replace a CMS for long-form editorial content, and it does not manage product data.
+- It has no database of its own: everything is stored as custom objects in the commercetools project it is
+  installed in, and nothing is deleted when you undeploy it.
+- It registers no Subscription, API Extension or scheduled job, so it is never in the path of carts, orders or
+  checkout.
+- The storefront package targets React and Next.js (App Router). Other clients can call the HTTP API directly.
 
-- [Getting started](#getting-started)
-- [Development](#development)
-- [Deploy to Connect](#deploy-to-connect)
-- [Domain model](#domain-model)
-- [Pages view](#pages-view)
-- [Page Builder](#page-builder)
-- [Catalogs: components, data sources, sections](#catalogs-components-data-sources-sections)
-- [Host integration](#host-integration)
-- [Custom objects](#custom-objects)
-- [Project structure](#project-structure)
+## Architecture at a glance
 
----
+```mermaid
+flowchart LR
+  subgraph MC["Merchant Center (browser)"]
+    ED["page-editor"]
+  end
+  subgraph HOST["Your storefront"]
+    SHIM["&lt;PageBuilder/&gt; + your components"]
+    CI["CI: catalog file"]
+  end
+  GW["Merchant Center gateway<br/>/proxy/forward-to"]
+  subgraph CONNECT["commercetools Connect"]
+    SVC["page-builder-service<br/>/service"]
+  end
+  CO[("Custom objects<br/>page-editor*")]
+  CTP[("Products, categories, stores")]
+  GCS[("Cloud Storage<br/>media, optional")]
+  ED -->|MC user JWT| GW --> SVC
+  ED -.->|preview| SHIM
+  SHIM -->|render key| SVC
+  CI -->|admin secret| SVC
+  SVC --> CO
+  SVC --> CTP
+  SVC -.-> GCS
+```
 
-## Getting started
+Developers define the vocabulary, authors assemble pages from it, and the service is the only thing that
+reads and writes the stored pages. The storefront asks the service for a page and draws it; if the service is
+slow or down, the storefront renders its own fallback. More in [docs/architecture.md](docs/architecture.md).
+
+## Repository layout
+
+| Folder | What it is |
+|---|---|
+| `page-editor/` | The Merchant Center custom application (yarn) |
+| `page-builder-service/` | The Connect service (npm) |
+| `packages/page-builder/` | The storefront package (npm) |
+| `docs/` | The guides linked above; `docs/sdd/` holds the wire contracts shared by all three parts |
+| `skills/integrate-page-builder/` | A step-by-step guide for integrating a client application, usable by people and coding agents |
+| `connect.yaml` | The Connect contract for the editor and the service |
+
+There is no root manifest: each part installs and builds on its own. The full layout is in
+[docs/development.md](docs/development.md#repository-layout).
+
+## Prerequisites
+
+- A commercetools project with Product Search activated, and a Merchant Center account that may register
+  custom applications.
+- Access to commercetools Connect for that project.
+- A storefront you can change (React/Next.js for the package, or any client that calls the HTTP API).
+- Node.js 22 and Yarn 1 for local development.
+- Optional, for media uploads: a Google Cloud Storage bucket and a service-account key.
+
+## Quick start (local)
+
+The service runs against an in-memory commercetools, so you can try it without credentials:
+
+```bash
+cd page-builder-service
+npm install
+npm run dev:fake       # http://127.0.0.1:8080/service
+```
+
+The editor runs in the Merchant Center's local development shell:
 
 ```bash
 cd page-editor
 cp .env.example .env     # then fill in your application id and project key
 yarn install
-yarn start
+yarn start               # http://localhost:3001
 ```
 
-The app is served at `http://localhost:3001` by default. To run it for real in your project, see [Deploy to Connect](#deploy-to-connect).
+How to point the local editor at a local service, and every command: [docs/development.md](docs/development.md).
 
----
+## Deployment summary
 
-## Development
+The editor needs the service's URL, which exists only after the service is deployed, so the deployment runs
+twice.
 
-All dev commands run from the `page-editor/` directory:
+1. Register the custom application in the Merchant Center with a placeholder URL.
+2. Deploy the connector with the service configuration and a placeholder `PAGE_BUILDER_SERVICE_URL`.
+3. Redeploy with `PAGE_BUILDER_SERVICE_URL` set to the service URL plus `/service`.
+4. Put the editor's deployed URL into the Merchant Center registration.
+5. Install the storefront package, mount it, and add the catalog push to your CI.
 
-| Command | Description |
+Every step, and how to check it worked: [docs/connect-deployment.md](docs/connect-deployment.md).
+
+## Configuration
+
+The keys in [`connect.yaml`](connect.yaml). Connect injects the commercetools API client (`CTP_*`) into the
+service; it is never configured by hand.
+
+**`page-builder-service`**
+
+| Key | Kind | Required | Default | What it does |
+|---|---|---|---|---|
+| `PB_RENDER_ORIGINS` | standard | yes | | Storefront server origins allowed to call the render API |
+| `PB_EDITOR_ORIGINS` | standard | yes | `https://mc.europe-west1.gcp.commercetools.com` | Merchant Center origins allowed to drive the visual-editing bridge |
+| `PB_MC_ISSUER` | standard | no | | Merchant Center API gateway the editor's JWTs come from (`gcp-eu`, `gcp-us`, `gcp-au`, `aws-eu`, `aws-us` or a URL); unset turns the editor's service access off |
+| `PB_MEDIA_BUCKET` | standard | no | | Cloud Storage bucket for uploaded media; set together with `PB_MEDIA_SERVICE_ACCOUNT_KEY_B64` |
+| `PB_MEDIA_PATH_PREFIX` | standard | no | `page-builder/media` | Object key prefix inside the bucket |
+| `PB_MEDIA_MAX_BYTES` | standard | no | `10485760` | Largest accepted upload in bytes |
+| `PB_MEDIA_ALLOWED_TYPES` | standard | no | | Allowed upload content types; empty allows all supported types |
+| `PB_CACHE_TTL_SECONDS` | standard | no | `15` | Seconds to cache commercetools reads; drafts are never cached |
+| `PB_FACET_ATTRIBUTES` | standard | no | | Product attributes offered as facets, in order; empty derives them from the product types |
+| `PB_FACET_LIMIT` | standard | no | `8` | Maximum number of derived facets |
+| `LOG_LEVEL` | standard | no | `info` | `debug`, `info`, `warn` or `error` |
+| `PB_RENDER_KEY` | secured | yes | | Key the storefront presents on render calls |
+| `PB_ADMIN_SECRET` | secured | yes | | Bearer secret for catalog validate, push and publish from CI |
+| `PB_PREVIEW_TOKEN` | secured | no | | Unlocks drafts and edit mode; unset disables preview |
+| `PB_MEDIA_SERVICE_ACCOUNT_KEY_B64` | secured | no | | Service-account key for `PB_MEDIA_BUCKET`, base64 on one line |
+
+**`page-editor`**
+
+| Key | Kind | Required | Default | What it does |
+|---|---|---|---|---|
+| `CUSTOM_APPLICATION_ID` | standard | yes | | The id the Merchant Center returns when you register the application |
+| `ENTRY_POINT_URI_PATH` | standard | yes | `page-editor` | The application's entry point path |
+| `CLOUD_IDENTIFIER` | standard | yes | `gcp-eu` | `gcp-us`, `gcp-eu`, `aws-us` or `aws-eu` |
+| `PAGE_BUILDER_SERVICE_URL` | standard | no | | The service URL including `/service`; empty keeps the editor on the Merchant Center GraphQL gateway and turns uploads off |
+| `PAGE_BUILDER_SERVICE_HOOKS` | standard | no | | `all`, or a comma list of hook families that go through the service; empty means none |
+
+Notes on each key: [page-builder-service/README.md](page-builder-service/README.md#configuration) and
+[docs/host-integration.md](docs/host-integration.md#merchant-center-app-and-the-service).
+
+## Required scopes
+
+**API client of the service** (`inheritAs.apiClient.scopes` in `connect.yaml`)
+
+| Scope | Why |
 |---|---|
-| `yarn start` | Start the dev server |
-| `yarn build` | Production build |
-| `yarn typecheck` | TypeScript type check |
-| `yarn lint` | ESLint |
-| `yarn test` | Jest tests |
-| `yarn test:service` | The same suite with every hook family routed through the page-builder service transport |
-| `yarn format` | Prettier |
+| `manage_key_value_documents` | Reads and writes the page, catalog and settings custom objects |
+| `view_products` | Product Search, product projections and product types for data sources |
+| `view_categories` | The category tree |
+| `view_stores` | Resolving a store key to its id |
 
----
+The service has no `manage_project` and no write access to anything but custom objects.
 
-## Deploy to Connect
+**OAuth scopes of the editor** (`oAuthScopes` in `page-editor/custom-application-config.mjs`): `view_products`
+and `manage_products`, which the Merchant Center maps to the application's View and Manage permissions. With
+the service handling the custom objects, authors need no custom-object permission of their own.
 
-[`connect.yaml`](connect.yaml) at the repo root declares both runtime pieces as commercetools Connect applications, so one connector deploys the whole thing:
+## When something is down
 
-| Application | Type | What it is |
-|---|---|---|
-| `page-builder-service` | `service` (endpoint `/service`) | Render API, catalog ingest and the Merchant Center object gateway. Connect generates its API client at install time (scopes `manage_key_value_documents view_products view_categories view_stores`), so no commercetools credentials are configured by hand. |
-| `page-editor` | `merchant-center-custom-application` | The editor, served inside the Merchant Center. |
+The service is never in the path of a commercetools write. In short: the storefront degrades to its own
+fallback when the service fails or takes longer than 2 seconds; catalog pushes, editor saves, uploads and
+every credential check fail closed. The full table is in the
+[service README](page-builder-service/README.md#fail-open-or-fail-closed).
 
-**Deploy the service first.** The editor needs the service's public URL, which exists only once the service is running.
+## Operations
 
-1. **Create a connector from this repository** in your commercetools organization and start a deployment for your project. A sandbox deployment is fine to try it out, but it scales to zero and cold starts in about 15 seconds. Use a production-type deployment for a storefront.
-2. **Configure `page-builder-service`.** Every key, its default and what it does is in the [service README](page-builder-service/README.md#configuration). The ones you must set:
-   - `PB_RENDER_KEY` (secured): the key your storefront presents on render calls.
-   - `PB_ADMIN_SECRET` (secured): the bearer secret your CI uses to push the catalog.
-   - `PB_RENDER_ORIGINS`: the storefront server origins allowed to call the render API.
-   - `PB_EDITOR_ORIGINS`: the Merchant Center origin(s) allowed to drive the visual editor. It defaults to the `gcp-eu` Merchant Center.
-   - `PB_MC_ISSUER`: your Merchant Center API gateway (`gcp-eu`, `gcp-us`, `gcp-au`, `aws-eu` or `aws-us`). Without it the editor cannot reach the service through the gateway.
-   - Optional: `PB_PREVIEW_TOKEN` turns on draft preview, and `PB_MEDIA_BUCKET` with `PB_MEDIA_SERVICE_ACCOUNT_KEY_B64` turns on image and video uploads (see [Images and videos](#images-and-videos)).
-3. **Note the service URL** Connect gives the deployment. The service is mounted under `/service`, and the editor needs that path included.
-4. **Configure `page-editor`:**
-   - `CUSTOM_APPLICATION_ID`: the id the Merchant Center returns when you register the custom application.
-   - `ENTRY_POINT_URI_PATH`: the entry point path (default `page-editor`).
-   - `CLOUD_IDENTIFIER`: one of `gcp-us`, `gcp-eu`, `aws-us`, `aws-eu` (default `gcp-eu`).
-   - `PAGE_BUILDER_SERVICE_URL`: the URL from step 3, including `/service`. For the first deployment of the editor, before you have the service URL, use a dummy value and redeploy once you do. Left empty, the editor keeps every hook on the Merchant Center GraphQL gateway and the media upload field is off.
-   - `PAGE_BUILDER_SERVICE_HOOKS`: `all`, or a comma list of the hook families that should go through the service (see [Merchant Center app and the service](#merchant-center-app-and-the-service)).
-5. **Wire up the storefront and CI** by following [Wire it up](#wire-it-up): install the shim, mount it, and push the catalog after each deploy.
+- **Health:** `GET /service/status` (alias `/healthz`).
+- **Logs:** structured JSON; every line of a request carries its `X-Request-ID`, and editor writes are logged
+  with `audit: true` and the acting user. Read them with
+  `commercetools connect deployment logs --key <deployment> --application page-builder-service`.
+- **Replay:** there are no events or queues. The one retryable write is the catalog push, which is idempotent.
+- **Undeploy:** nothing is registered in the project, and pages stay in place as custom objects.
 
-The service has no `postDeploy` or `preUndeploy` script and registers nothing in your project (no Extensions, Subscriptions, Types or Channels), so undeploying removes nothing from commercetools. Your pages and catalog are custom objects and stay in place. Logs are structured JSON; read them with `commercetools connect deployment logs --key <deployment> --application page-builder-service`.
+## Testing
 
----
+- Editor: `cd page-editor && yarn test && yarn test:service` (Jest; the second run routes every data hook
+  through the service).
+- Service: `cd page-builder-service && npm test` (Vitest, in-memory commercetools, no credentials).
+- Storefront package: `cd packages/page-builder && npm test`.
+- Coverage, the shared test harness and its gotchas: [docs/development.md](docs/development.md) and
+  [AGENTS.md](AGENTS.md#testing).
 
-## Domain model
+## Contributing
 
-### Page kinds
+See [CONTRIBUTING.md](CONTRIBUTING.md). Contributions carry no support commitment.
 
-The page tree mixes several page kinds that are authored, bound, and rendered differently:
+## Support
 
-| Kind | Example | Notes |
-|---|---|---|
-| **Static page** | Homepage, About us, Size guide | Hand-authored, one canonical URL. |
-| **Category page** (PLP) | Women → Dresses | Bound to a CT category. Renders the category landing. A category without a dedicated page falls back to *All categories*. |
-| **Product detail page** (PDP) | `Product detail` template | Renders for every product. One global template by default; categories can have *PDP overrides* that apply to all products in that subtree. |
-| **Dynamic page** | Search results | Driven by URL parameters at runtime. |
-| **Folder** | "Shop", "Content" | Organisational only — no canvas. |
+This repository is unsupported. See [SUPPORT.md](SUPPORT.md).
 
-### Categories have two editable surfaces
+## License
 
-Selecting a category in Pages exposes a **PLP / PDP** toggle. The right panel shows the metadata, status, and CTA for whichever surface is active:
-
-- **Category page (PLP)** — the landing for that category.
-  - *Dedicated* — the category has its own page in the builder.
-  - *Fallback* — no dedicated page; renders the *All categories* fallback. A "Create dedicated page" CTA is shown.
-- **Product detail page (PDP)** — applies to every product in the category subtree. Two states:
-  - *Inherits global* — products render with the global PDP template. Options: "Create override" or "Edit global PDP".
-  - *Override* — a category-specific PDP exists. A "Forked from global PDP" tag makes the lineage explicit.
-
-### Shared mental model
-
-Developers shape the **vocabulary** in host (storefront) code — a catalog file defines component types (what fields exist) and data source types (what data can be fetched, by naming a service resolver), pushed into CT by the page-builder service. Content authors **assemble** with it in this app — they drag components onto the canvas and bind saved data sources to component slots. The component, data-source, and section catalogs stored in CT custom objects are the single source of truth every host and this app share.
-
----
-
-## Pages view
-
-The Pages view (`/pages`) is the landing screen for content authors. It shows the full page tree — static pages, templates, and the category tree from the CT catalog — in a two-panel layout.
-
-**Left panel — page tree**
-
-- Displays all pages and category nodes in a collapsible tree.
-- Each row shows a live **Draft** or **Published** badge derived from the CT custom objects for that page, so authors can see at a glance which pages have builder content and what state they are in.
-- Category nodes that fall back to the root "All categories" page are marked as fallback.
-
-**Right panel — page detail**
-
-Selecting a node shows:
-
-- **About** — slug, type, markets, languages, and last-saved date (from the draft history).
-- **Page assignment** — live status, version, published date, and number of unpublished changes, all read from the draft/published custom objects.
-- **Version history** — the five most recent saves, showing whether each was a draft save or a publish event.
-- **Open in Page Builder** — navigates to the builder for that page. The button is disabled until builder content exists.
-
----
-
-## Page Builder
-
-The Page Builder (`/builder/:pageId`) is a drag-and-drop editor for composing a page from layout elements and components.
-
-### Canvas sections
-
-Every page is split into sections — by default **HEAD**, **MAIN**, and **FOOTER** — but the actual set comes from the `sections` catalog synced from host code (see [Catalogs](#catalogs-components-data-sources-sections)); the app falls back to the HEAD/MAIN/FOOTER default if that catalog is empty. Each section holds one or more *layout elements* (rows, grids, carousels, etc.) and each layout element holds one or more *component slots*.
-
-### Element styles
-
-Every layout and component element has a **Style** dropdown in its settings panel. The selected value is stored as a plain string on the element (`style` property) and is intended to be consumed by the storefront renderer to apply a visual theme.
-
-The available options are defined centrally in:
-
-```
-src/components/page-builder/element-styles.ts
-```
-
-Each entry has an `id` (the stored value) and a localized `label` object:
-
-```typescript
-export const ELEMENT_STYLE_OPTIONS: ElementStyleOption[] = [
-  {
-    id: '',           // empty string = inherit from page (default)
-    label: { 'en-US': 'Inherit from page', 'de-DE': 'Von Seite erben', ... },
-  },
-  {
-    id: 'light',
-    label: { 'en-US': 'Light', 'de-DE': 'Hell', ... },
-  },
-  // ...
-];
-```
-
-The `id` values are constrained by the `ElementStyle` union type in `types.ts`:
-
-```typescript
-export type ElementStyle = '' | 'light' | 'dark' | 'accent' | 'muted' | 'charcoal' | 'sage';
-```
-
-**To add a new style:**
-
-1. Add the new string literal to the `ElementStyle` union in `src/components/page-builder/types.ts`.
-2. Add a matching entry (with all locale labels) to `ELEMENT_STYLE_OPTIONS` in `src/components/page-builder/element-styles.ts`.
-
-### Menu bar
-
-The menu bar is split into discrete affordances:
-
-- **Back button** — returns to Pages, highlighting the originating category and restoring the PLP/PDP toggle state via `?node=` and `?view=` URL params.
-- **Page name + icon** — identifies the page being edited.
-- **Status pill** — color-coded by state (unsaved = amber, saved/draft = info, published = green). Shows the app version in monospace. The pill and the history icon in the top-right share one handler — a single, predictable entry point for version history.
-- **Device switcher** — toggles the canvas max-width between desktop (1240 px), tablet (820 px), and mobile (390 px).
-- **Undo / Redo** — step through in-session page history.
-- **Save state indicator** — centered; shows a spinner while saving, a cloud icon once saved, or a pencil icon for unsaved changes.
-- **Save split button** — primary action saves the draft; the dropdown option "Save and make live" saves then immediately publishes.
-- **Publish button** — enabled whenever a saved draft has not yet been published (`publishedAt === null` on the latest draft version).
-
-### Save & publish flow
-
-- **Save Draft** — appends a new version to the page's draft history, stored alongside `published` in one combined custom object at key `page-<pageId>` (up to 50 versions retained). The new version always has `publishedAt: null`, which enables the Publish button.
-- **Publish** — writes the current state to that same object's `published` field and marks the just-saved draft version with a `publishedAt` timestamp. After publishing, the Publish button is disabled until the next save.
-- **Save and make live** — runs Save then Publish in sequence in a single action.
-
----
-
-## Catalogs: components, data sources, sections
-
-Component types, data source types, and section presets are **defined in host (storefront) code, not in this app**. A host's `page-builder.catalog.json` declares them, and the page-builder service ingests it into this project's custom objects — `components`, `data-sources`, `sections` (and a service-owned `theme`) — that the Page Builder canvas reads to populate its component palette, data-source picker, and section options. See [Host integration](#host-integration) for how a host defines and pushes them.
-
-There's no separate editor screen for these in this app — if a catalog hasn't been synced yet, its palette/picker is simply empty.
-
-### Concepts
-
-| Term | Meaning |
-|---|---|
-| **Component type** | A reusable building block (e.g. `hero`, `productGrid`). Identified by a unique `type` key. |
-| **Data source type** | A template describing what data is fetched and what configuration it needs (e.g. `commercetools/product-list`). Identified by a unique `type` key. |
-| **Section** | A named top-level canvas region (default: HEAD/MAIN/FOOTER) a page's layout elements are grouped into. |
-| **Schema** | The list of editable fields belonging to a component or data source type. |
-| **Group** | A label used to organise types in their palette/catalog (e.g. `content`, `commerce`, `product`, `category`). |
-| **Saved data source** | An in-app, named instance of a data source type with filled-in field values — see below. |
-
-### Schema field kinds
-
-Component and data source schemas share the same field vocabulary:
-
-| Kind | Description | Extra options |
-|---|---|---|
-| `text` | Single-line text | `localized: true` for per-locale values |
-| `richtext` | Multi-line rich text (bold, italic, links) | `localized: true` |
-| `number` | Numeric value | — |
-| `boolean` | On/off toggle | — |
-| `select` | Dropdown — choose from a fixed option list | `options: [{key, label}]`, `localized: true` for per-locale labels |
-| `image` | Image URL / asset reference | — |
-| `link` | URL / navigation target | — |
-| `group` | Repeatable list of sub-fields | `children: SchemaField[]` — nesting is one level deep |
-| `dataSource` | Bind a saved data source (e.g. a product list query) — components only | `dataSourceType` to restrict which data source types are allowed |
-
-All field kinds also accept `key` (unique identifier, used as the settings key in the page JSON), `label` (`string \| LocalizedString`), and `required` (`boolean`).
-
-```jsonc
-// Plain text, localized
-{ "key": "title", "label": "Title", "kind": "text", "localized": true }
-
-// Fixed-option select
-{ "key": "ratio", "label": "Aspect ratio", "kind": "select",
-  "options": [{ "key": "16:9", "label": "16:9" }, { "key": "4:3", "label": "4:3" }]
-}
-
-// Group — repeatable list of sub-fields (one level deep)
-{ "key": "slides", "label": "Slides", "kind": "group",
-  "children": [
-    { "key": "headline", "label": "Headline", "kind": "text" },
-    { "key": "image", "label": "Image", "kind": "image" }
-  ]
-}
-
-// Data source — binds a saved query/feed at page-edit time (components only)
-// omit dataSourceType to accept any type
-{ "key": "products", "label": "Products", "kind": "dataSource",
-  "dataSourceType": "commercetools/product-list" }
-```
-
-### Saved data source instances
-
-Unlike the *types* above, saved **instances** are still authored directly in this app, inside the Page Builder canvas. A saved instance is a named, configured copy of a data source type (e.g. *"Bestsellers — homepage"*), reusable across pages; a component's `dataSource` field stores the saved instance's `id`.
-
-The configure-data-source dialog has three modes:
-
-- **Use saved** — pick from existing saved instances of the matching type; each row has its own Edit button.
-- **Create new** — name + schema form; submitting creates a fresh instance.
-- **Edit configuration** — opens with the saved instance pre-filled. *Save changes* updates it in place (propagates to every page binding that references it); *Save as copy* forks into a new instance — the right choice when other pages depend on the current values.
-
-A `savedForReuse: true` instance is a shared, project-wide resource — editing in place propagates everywhere, so *Save as copy* is the only way to diverge without breaking sibling bindings.
-
----
-
-## Host integration
-
-A storefront integrates with three things, none of which touch commercetools:
-
-1. **A component map and one mount** — `<PageBuilder>` from [`@commercetools-labs/page-builder`](packages/page-builder/README.md) (v1.0, React/Next.js only) renders any page.
-2. **A catalog file** — `page-builder.catalog.json` declares the component types (with editable fields), data sources (each naming a service resolver), sections and theme tokens. CI validates it and pushes it to the service.
-3. **The page-builder service** — a per-project commercetools Connect service ([`page-builder-service/`](page-builder-service/README.md)) that reads pages and drafts, gates preview, resolves data into [canonical shapes](docs/sdd/canonical-shapes.md), and returns the render tree. It is the only component holding commercetools credentials.
-
-```
-Merchant Center ──(MC user JWT)──▶ service ◀──(render key)── storefront shim
-   page-editor                        │                         <PageBuilder/>
-                                      ▼
-                          commercetools custom objects, products, categories
-```
-
-Step by step, for any client (web or native): [the integration guide](skills/integrate-page-builder/SKILL.md). Contracts: [definitions](docs/sdd/definitions-contract.md), [preview and bridge](docs/sdd/preview-contract.md), [canonical shapes](docs/sdd/canonical-shapes.md), and the HTTP API in [`openapi.yaml`](page-builder-service/openapi.yaml).
-
-### Wire it up
-
-1. **Deploy the service** to the project, as in [Deploy to Connect](#deploy-to-connect) (Connect application `page-builder-service`, endpoint `/service`). Set `PB_RENDER_KEY`, `PB_RENDER_ORIGINS`, `PB_PREVIEW_TOKEN`, `PB_ADMIN_SECRET`, `PB_EDITOR_ORIGINS`, and the API client (`CTP_*`, scope `manage_key_value_documents view_products view_categories view_stores`). Details and verification steps: [`page-builder-service/README.md`](page-builder-service/README.md).
-2. **Install the shim** — `npm i @commercetools-labs/page-builder` — and set `PB_SERVICE_URL`, `PB_RENDER_KEY`, `PB_ORIGIN`.
-3. **Mount it** in a catch-all route, passing the request path, the shopper's market (`locale`, `currency`, `country`, `store`) and `searchParams`.
-4. **Map components** — each catalog `type` to a React component taking `{ data }`; use `PBText` for inline-editable text.
-5. **Write the catalog file** and add the CI steps: validate on pull requests, push and publish after deploy (`skills/integrate-page-builder/scripts/catalog.mjs` has no dependencies).
-6. **Point the Merchant Center app** at the service: set `PAGE_BUILDER_SERVICE_URL` and `PAGE_BUILDER_SERVICE_HOOKS` (see [Merchant Center app and the service](#merchant-center-app-and-the-service)), and give the project's preview settings the storefront's route templates.
-
-Preview and visual editing need nothing more in the host: forward `searchParams` and the service decides (token, drafts, edit mode, allowed origins, manifest).
-
-### Storage contract
-
-Pages and the catalog live in the `page-editor*` custom-object containers described under [Custom objects](#custom-objects). The service is the only reader the storefront has; do not read them from a host.
-
-### Merchant Center app and the service
-
-The app's page-builder data hooks (pages, components, comments, workflows, preview settings, data-source instances, catalogs, reset) can go through the service instead of the Merchant Center GraphQL gateway, so MC users need no custom-object permission. It is switched by two build-time settings in `page-editor/.env`:
-
-| Variable | |
-|---|---|
-| `PAGE_BUILDER_SERVICE_URL` | the service URL including `/service`; empty keeps every hook on the GraphQL gateway |
-| `PAGE_BUILDER_SERVICE_HOOKS` | `all`, or a comma list of `pages, page-components, comments, workflows, page-workflow, preview-settings, data-sources, sections, components, instances, reset` |
-
-The service must be configured with `PB_MC_ISSUER` (this project's Merchant Center API Gateway, e.g. `gcp-eu`) and, for its audience, the `CONNECT_SERVICE_URL` that Connect provides (its own public URL). Calls go through `/proxy/forward-to`; the service verifies the forwarded JWT, restricts access to the page-builder containers, keeps the host catalog read-only, and audit-logs each write with the acting user. The product/category pickers keep using the Merchant Center gateway. Roll out one family at a time (they are independent) and roll back by editing the list. Run `yarn test:service` in `page-editor/` to run the whole suite through the service transport.
-
-**Local development.** The gateway runs in the cloud and cannot forward to a service on `localhost`, so with `PAGE_BUILDER_SERVICE_URL`
-pointing there, `yarn start` can call the service directly with a plain `fetch` instead. Set the same token as
-`PB_DEV_TOKEN` on the service (with `PB_EDITOR_ORIGINS=http://localhost:3001`) and as `PAGE_BUILDER_SERVICE_DEV_TOKEN` in
-`page-editor/.env.local`, then restart `yarn start`. It is development-only on both sides: the app reads the token only under
-`yarn start` and a production bundle does not contain the direct path, and the service refuses to start with `PB_DEV_TOKEN` set when
-`NODE_ENV=production`. Details in the [service README](./page-builder-service/README.md#local-development-with-the-merchant-center-app).
-
-### Images and videos
-
-`kind: 'image'` and `kind: 'video'` fields upload to, and pick from, a Google Cloud Storage bucket owned by the **service**. The
-editor needs only `PAGE_BUILDER_SERVICE_URL` (no hook family has to use the service); the service needs `PB_MEDIA_BUCKET` and
-`PB_MEDIA_SERVICE_ACCOUNT_KEY_B64`. It reuses the same Merchant Center sign-in as everything else, so there is no separate media
-service, token, business unit or image URL to configure. A field stores the plain file URL, so existing pages (including ones with a
-URL typed or pasted in) keep working. The bucket setup, limits and security rules are in the
-[service README](./page-builder-service/README.md#media-uploads). With no bucket configured the picker says so and nothing breaks.
-
----
-
-## Custom objects
-
-All app data is stored in CT custom objects under one container, `page-editor`. Each object holds both the draft version history and the current published state together (schema v2: `{ schemaVersion, draft: { versions: [...] }, published: {...} | null }`):
-
-| Object | Key | Owner |
-|---|---|---|
-| Component type catalog | `components` | Host code, via `page-builder sync`/`publish` — read-only in this app |
-| Data source type catalog | `data-sources` | Host code, via `page-builder sync`/`publish` — read-only in this app |
-| Section catalog | `sections` | Host code, via `page-builder sync`/`publish` — read-only in this app |
-| Saved data source instances | `data-source-instances` | This app (Page Builder canvas) |
-| Page content | `page-<pageId>` (e.g. `page-home`) | This app (Pages / Page Builder) |
-
-Every save appends a new entry to `draft.versions[]` (capped at 50); publishing copies the current draft into `published` and stamps it with `publishedAt`. The storefront, and this app's Page Builder for the three catalogs, only ever read `published`.
-
----
-
-## Project structure
-
-```
-page-editor/                  # Merchant Center Custom Application (the webapp)
-  src/
-    components/
-      pages/                  # Pages view — tree + detail panel
-        pages.tsx             # Root container
-        page-tree-row.tsx     # Tree row component
-        page-detail.tsx       # Detail panel (fetches per-page CT data)
-        state-tag.tsx         # Draft/Published badge
-      page-builder/           # Visual page builder — canvas, settings pane, menu bar
-    hooks/
-      use-page-builder-connector/          # CT hooks — per-page draft/published (read/write)
-      use-components-connector/            # CT hooks — component catalog (read-only, host-pushed)
-      use-data-sources-connector/          # CT hooks — data source type catalog (read-only, host-pushed)
-      use-sections-connector/              # CT hooks — section catalog (read-only, host-pushed)
-      use-data-source-instances-connector/ # CT hooks — saved data source instances (read/write)
-      use-categories-connector/            # CT hooks — category tree
-    service/                  # Transport to the page-builder service (Apollo link, config, forward-to)
-
-packages/
-  page-builder/                # @commercetools-labs/page-builder 1.0 — the storefront shim (see Host integration)
-
-connect.yaml                   # Connect deployment: page-editor (MC custom app) + page-builder-service
-
-page-builder-service/          # The per-project Connect service: render, catalog ingest, MC object gateway
-  openapi.yaml                 # The /v1 API; shim and service types are generated from it
-
-docs/sdd/                      # Wire contracts shared by the service, shim and builder
-
-skills/
-  integrate-page-builder/       # The step-by-step guide for integrating a client application
-```
+MIT, see [LICENSE](LICENSE).

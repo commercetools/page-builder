@@ -1,7 +1,7 @@
 # Page builder (commercetools-labs)
 
-Read [README.md](README.md) for what this is and how it is deployed. This file is the working
-context for people and agents changing the code.
+Read [README.md](README.md) for what this is, and [docs/](docs/architecture.md) for how it works and
+deploys. This file is the working context for people and agents changing the code.
 
 ## Purpose
 
@@ -20,7 +20,7 @@ directory.
 | `page-builder-service/` | `@commercetools-labs/page-builder-service` | npm, Vitest | The per-project Connect service: render API, catalog ingest, Merchant Center object gateway |
 | `packages/page-builder/` | `@commercetools-labs/page-builder` | npm, Vitest | The storefront shim (`<PageBuilder/>`, React/Next.js) |
 
-Also in the repo: `docs/sdd/` (wire contracts shared by all three), `skills/integrate-page-builder/`
+Also in the repo: `docs/` (the guides the README links to), `docs/sdd/` (wire contracts shared by all three), `skills/integrate-page-builder/`
 (integration guide for client apps), and [`connect.yaml`](connect.yaml), which deploys
 `page-editor` and `page-builder-service` as Connect applications.
 
@@ -49,8 +49,11 @@ cd packages/page-builder && npm install --legacy-peer-deps && npm test
   and `published`. The host catalog objects are read-only in the editor.
 - **`PAGE_BUILDER_SERVICE_*` are build-time settings** of the editor. `PB_DEV_TOKEN` /
   `PAGE_BUILDER_SERVICE_DEV_TOKEN` are development-only on both sides and must never reach production.
-- **Keep `connect.yaml` and the READMEs in step** when a configuration key is added or changed:
-  `connect.yaml`, the table in `page-builder-service/README.md`, and `page-editor/.env.example`.
+- **Keep `connect.yaml` and the docs in step** when a configuration key is added or changed:
+  `connect.yaml`, the configuration tables in `README.md` and `page-builder-service/README.md`,
+  `docs/connect-deployment.md`, and `page-editor/.env.example`.
+- **The README is the overview for evaluators and operators.** Keep it short; detail belongs in
+  `docs/` (author-facing behaviour in `using-the-editor.md`, wiring in `host-integration.md`).
 - **Never commit secrets, API clients or project-specific values.** `.env` files are git-ignored; add
   placeholders to the `.env.example` next to them. No customer names or internal hostnames in code,
   docs, fixtures or commit messages: the repo goes through the commercetools-labs publish gate.
