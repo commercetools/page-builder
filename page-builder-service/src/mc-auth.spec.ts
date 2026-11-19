@@ -5,6 +5,8 @@ import { AUDIENCE, ISSUER, mcKit } from './testing/mc-kit.js';
 const config = { mc: { issuer: ISSUER, audience: AUDIENCE } };
 const ABSENT = '/v1/admin/objects/page-editor/nope';
 
+const b64url = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
+
 describe('mcAuth', () => {
   it('rejects a request without a token', async () => {
     const t = testApp(config, { mcKeys: (await mcKit()).keys as never });
@@ -35,7 +37,7 @@ describe('mcAuth', () => {
     ['a missing subject', async (k) => k.sign({ sub: null })],
     ['another project', async (k) => k.sign({ claims: { [`${ISSUER}/claims/project_key`]: 'someone-elses' } })],
     ['a missing project claim', async (k) => k.sign({ claims: { [`${ISSUER}/claims/project_key`]: undefined } })],
-    ['a non-RS256 algorithm', async () => 'eyJhbGciOiJub25lIn0.eyJzdWIiOiJ4In0.'],
+    ['a non-RS256 algorithm', async () => `${b64url({ alg: 'none' })}.${b64url({ sub: 'x' })}.`],
   ];
   for (const [label, make] of bad) {
     it(`rejects ${label}`, async () => {
