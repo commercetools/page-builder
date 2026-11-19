@@ -1,0 +1,8 @@
+query FetchContainerObjects($container: String!, $limit: Int, $offset: Int) {
+  customObjects(container: $container, limit: $limit, offset: $offset) {
+    total
+    results {
+      key
+    }
+  }
+}

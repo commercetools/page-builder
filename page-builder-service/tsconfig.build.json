@@ -1,0 +1,5 @@
+{
+  // Build-only view: specs run under Vitest from source and must not be emitted.
+  "extends": "./tsconfig.json",
+  "exclude": ["src/**/*.spec.ts", "src/testing"]
+}

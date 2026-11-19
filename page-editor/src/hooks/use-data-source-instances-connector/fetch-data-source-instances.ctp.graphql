@@ -1,0 +1,10 @@
+query FetchDataSourceInstances($container: String!, $key: String!) {
+  customObject(container: $container, key: $key) {
+    id
+    key
+    container
+    version
+    value
+    lastModifiedAt
+  }
+}

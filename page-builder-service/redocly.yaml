@@ -1,0 +1,8 @@
+extends:
+  - recommended
+rules:
+  # The canonical resolved-data shapes (ProductCard, SearchResult, …) are the contract for the
+  # free-form `LayoutItem.configuration` payloads, so no path references them directly.
+  no-unused-components: off
+  # The service is deployed per project; there is no public server URL to declare.
+  no-server-example.com: off

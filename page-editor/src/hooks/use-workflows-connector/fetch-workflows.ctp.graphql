@@ -1,0 +1,8 @@
+query FetchWorkflows($container: String!, $limit: Int) {
+  customObjects(container: $container, limit: $limit) {
+    results {
+      key
+      value
+    }
+  }
+}

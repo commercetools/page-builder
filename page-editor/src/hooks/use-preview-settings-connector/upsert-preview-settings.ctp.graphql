@@ -1,0 +1,10 @@
+mutation UpsertPreviewSettings($draft: CustomObjectDraft!) {
+  createOrUpdateCustomObject(draft: $draft) {
+    id
+    key
+    container
+    version
+    value
+    lastModifiedAt
+  }
+}

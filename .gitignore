@@ -1,0 +1,15 @@
+node_modules
+public
+dist
+.env.local
+.idea
+.DS_Store
+.connect
+coverage
+.claude
+.vscode
+page-builder-service/.env
+.env
+.npmrc
+*.tsbuildinfo
+.env.seed
